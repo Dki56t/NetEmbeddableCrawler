@@ -57,7 +57,7 @@ namespace Crawler.Logic
 
                     var descItem = new Item(doc.DocumentNode.OuterHtml, subPath);
                     item.AddItem(descItem);
-                    Walk(descItem, doc.DocumentNode, loader, processedUrls, ExtractRoot(subPath), depth - 1);
+                    Walk(descItem, doc.DocumentNode, loader, processedUrls, UrlHelper.ExtractRoot(subPath), depth - 1);
                 }
                 else if (type == NodeType.Text)
                 {
@@ -93,12 +93,6 @@ namespace Crawler.Logic
             doc.LoadHtml(pageStr);
 
             return doc;
-        }
-
-        private string ExtractRoot(string url)
-        {
-            var uri = new Uri(url);
-            return uri.GetLeftPart(UriPartial.Authority);
         }
 
         private NodeType ResolveType(HtmlNode node, string url)

@@ -19,10 +19,10 @@ namespace Test.Integration
             else
                 di.Create();
 
-            var item1= new Item("1", "http://site1/index.html", "http://site1/index.html");
-            item1.AddItem(new Item("1/internal", "http://site1/internal/internal.html", "http://site1/internal/internal.html"));
-            var item2 = new Item("2", "http://site2/index.html", "http://site2/index.html");
-            item2.AddItem(new Item("2/internal", "http://site2/otherinternal/some.html", "http://site2/otherinternal/some.html"));
+            var item1= new Item("1", "http://site1/index.html");
+            item1.AddItem(new Item("1/internal", "http://site1/internal/internal.html"));
+            var item2 = new Item("2", "http://site2/index.html");
+            item2.AddItem(new Item("2/internal", "http://site2/otherinternal/some.html"));
 
             ItemWriter.Write(new List<Item>
             {

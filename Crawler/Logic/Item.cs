@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Crawler.Logic
@@ -8,25 +9,23 @@ namespace Crawler.Logic
     /// </summary>
     internal class Item
     {
+        private Item _parent;
         private HashSet<Item> Items { get; }
         public byte[] ByteContent { get; }
         public string Content { get; }
         public string Path { get; }
-        public string SourceUri { get; }
 
-        public Item(string content, string path, string sourceUri)
+        public Item(string content, string path)
         {
             Content = content;
             Path = path;
-            SourceUri = sourceUri;
             Items = new HashSet<Item>();
         }
 
-        public Item(byte[] content, string path, string sourceUri)
+        public Item(byte[] content, string path)
         {
             ByteContent = content;
             Path = path;
-            SourceUri = sourceUri;
             Items = new HashSet<Item>();
         }
 
@@ -39,6 +38,10 @@ namespace Crawler.Logic
 
         public void AddItem(Item item)
         {
+            if(_parent != null)
+                throw new InvalidOperationException("Item can't have more than one parent");
+
+            item._parent = this;
             Items.Add(item);
         }
         public void RemoveItem(Item item)
@@ -49,6 +52,18 @@ namespace Crawler.Logic
         public IReadOnlyCollection<Item> GetSubItems()
         {
             return Items.ToArray();
+        }
+
+        public Item GetRoot()
+        {
+            return GetRoot(this);
+        }
+
+        private Item GetRoot(Item item)
+        {
+            if (item._parent != null)
+                return GetRoot(item._parent);
+            return item;
         }
     }
 }

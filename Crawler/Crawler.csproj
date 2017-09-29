@@ -52,6 +52,7 @@
     <Compile Include="Logic\ItemBuilder.cs" />
     <Compile Include="Logic\ItemWriter.cs" />
     <Compile Include="Logic\UrlHelper.cs" />
+    <Compile Include="Logic\UrlMapper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
