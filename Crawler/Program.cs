@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Configuration;
+using System.IO;
 using Crawler.Logic;
 
 namespace Crawler
@@ -8,19 +10,21 @@ namespace Crawler
         static void Main()
         {
             FileLoader loader = new FileLoader();
-            string testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
+            var tmpPath = Path.GetTempPath();
+            tmpPath = tmpPath.Remove(tmpPath.LastIndexOf(Path.DirectorySeparatorChar));
+            
             var cfg = new Configuration
             {
-                RootLink = "http://html-agility-pack.net/",
-                Depth = 2,
-                DestinationFolder = testDirectoryPath,
-                FullTraversal = true
+                RootLink = ConfigurationManager.AppSettings["RootLink"],
+                Depth = Convert.ToInt16(ConfigurationManager.AppSettings["Depth"]),
+                DestinationFolder = ConfigurationManager.AppSettings["DestinationFolder"].Replace("${TempPath}", tmpPath),
+                FullTraversal = Convert.ToBoolean(ConfigurationManager.AppSettings["FullTraversal"])
             };
+
             var mapper = new UrlMapper(cfg);
             var t = new ItemBuilder(cfg, mapper);
             var root = t.Build(loader).Result;
 
-            //Console.ReadLine();
             ItemWriter.Write(root, mapper);
         }
     }
