@@ -29,13 +29,6 @@ namespace Crawler.Logic
             Items = new HashSet<Item>();
         }
 
-        public string GetStringContent()
-        {
-            return string.IsNullOrEmpty(Content) 
-                ? null 
-                : Content;
-        }
-
         public void AddItem(Item item)
         {
             if(item._parent != null)
@@ -43,10 +36,6 @@ namespace Crawler.Logic
 
             item._parent = this;
             Items.Add(item);
-        }
-        public void RemoveItem(Item item)
-        {
-            Items.Remove(item);
         }
 
         public IReadOnlyCollection<Item> GetSubItems()

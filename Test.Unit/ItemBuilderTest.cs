@@ -78,5 +78,18 @@ namespace Test.Unit
 
             Assert.AreEqual(item.Content, "<body><a href=\"css/style.css\"> </a></body>");
         }
+
+        [TestMethod]
+        public void TestRemoveCrossOriginUri()
+        {
+            var mapper = new Mock<UrlMapper>(_cfg);
+            var loader = new Mock<FileLoader>();
+            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult("<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\" integrity=\"sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M\" crossorigin=\"anonymous\"></body>"));
+
+            var builder = new ItemBuilder(_cfg, mapper.Object);
+            var item = builder.Build(loader.Object).Result;
+
+            Assert.AreEqual(item.Content, "<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\"></body>");
+        }
     }
 }

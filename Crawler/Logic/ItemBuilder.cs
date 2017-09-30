@@ -35,19 +35,7 @@ namespace Crawler.Logic
             if (depth == 0)
                 return;
 
-            var links = new List<HtmlAttribute>();
-
-            //find all links
-            foreach (var element in node.Descendants()
-                .SelectMany(x => x.Attributes).ToArray())
-            {
-                if(Constant.LinkItems.Contains(element.Name))
-                    links.Add(element);
-
-                //remove crossorigin for correct work in chrome
-                if(Constant.CrossOriginItems.Contains(element.Name))
-                    element.Remove();
-            }
+            var links = PreprocessNodeAndGetLink(node);
 
             foreach (var link in links)
             {
@@ -94,10 +82,51 @@ namespace Crawler.Logic
                 {
                     ProcessContent(item, null, await loader.LoadBytes(uri), link, processedUrls, uri);
                 }
-                //type == NodeType.Mail just ignored, partial will be normalized and processed as html
+                //NodeType.Mail just ignored, NodeType.Partial will be normalized and processed as html
             }
 
             item.UpdateContent(node.OuterHtml);
+        }
+
+        private Item ProcessContent(
+            Item parent,
+            string stringContent, byte[] binaryContent,
+            HtmlAttribute link,
+            HashSet<string> processedUrls,
+            string uri)
+        {
+            var newItem = binaryContent == null
+                ? new Item(stringContent, uri)
+                : new Item(binaryContent, uri);
+            parent.AddItem(newItem);
+
+            processedUrls.Add(uri);
+
+            //replace url with path in filesystem
+            var path = _mapper.GetPath(newItem);
+            if (UrlHelper.IsExternalLink(link.Value))
+                link.Value = $"{path}{UrlHelper.GetPartialUrl(uri)}";
+
+            return newItem;
+        }
+
+        private List<HtmlAttribute> PreprocessNodeAndGetLink(HtmlNode node)
+        {
+            var links = new List<HtmlAttribute>();
+
+            foreach (var element in node.Descendants()
+                .SelectMany(x => x.Attributes).ToArray())
+            {
+                //find all links
+                if (Constant.LinkItems.Contains(element.Name))
+                    links.Add(element);
+
+                //remove crossorigin for correct work in chrome
+                if (Constant.CrossOriginItems.Contains(element.Name))
+                    element.Remove();
+            }
+
+            return links;
         }
 
         private bool CrawlingIsAllowed(string root, string newRoot)
@@ -118,28 +147,6 @@ namespace Crawler.Logic
             doc.LoadHtml(pageStr);
 
             return doc;
-        }
-
-        private Item ProcessContent(
-            Item parent,
-            string stringContent, byte[] binaryContent, 
-            HtmlAttribute link,
-            HashSet<string> processedUrls,
-            string uri)
-        {
-            var newItem = binaryContent == null 
-                ? new Item(stringContent, uri) 
-                : new Item(binaryContent, uri);
-            parent.AddItem(newItem);
-
-            processedUrls.Add(uri);
-            
-            //replace url with path in filesystem
-            var path = _mapper.GetPath(newItem);
-            if (UrlHelper.IsExternalLink(link.Value))
-                link.Value = $"{path}{UrlHelper.GetPartialUrl(uri)}";
-
-            return newItem;
         }
     }
 }
