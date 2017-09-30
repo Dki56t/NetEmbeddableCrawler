@@ -12,7 +12,7 @@ namespace Crawler.Logic
         /// <summary>
         /// Contains map url from html (as a key) to path in file system
         /// </summary>
-        public readonly Dictionary<string, string> _map = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _map = new Dictionary<string, string>();
 
         public UrlMapper(Configuration cfg)
         {
