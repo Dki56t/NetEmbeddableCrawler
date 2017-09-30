@@ -21,7 +21,7 @@ namespace Crawler.Logic
 
         public virtual string GetPath(Item item)
         {
-            var normalizedUrl = UrlHelper.NormalizeUrl(item.Path);
+            var normalizedUrl = UrlHelper.NormalizeUrl(item.Uri);
             if (_map.ContainsKey(normalizedUrl))
                 return _map[normalizedUrl];
 

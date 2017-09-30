@@ -1,23 +1,20 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Net;
+﻿using System.IO;
 using Crawler.Logic;
 
 namespace Crawler
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             FileLoader loader = new FileLoader();
             string testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
             var cfg = new Configuration
             {
                 RootLink = "http://html-agility-pack.net/",
-                Depth = 3,
+                Depth = 2,
                 DestinationFolder = testDirectoryPath,
-                FullTraversal = false
+                FullTraversal = true
             };
             var mapper = new UrlMapper(cfg);
             var t = new ItemBuilder(cfg, mapper);

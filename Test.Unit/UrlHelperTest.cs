@@ -1,5 +1,4 @@
-﻿using System;
-using Crawler.Logic;
+﻿using Crawler.Logic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Test.Unit

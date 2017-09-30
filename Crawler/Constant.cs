@@ -20,6 +20,12 @@ namespace Crawler
             "href"
         };
 
+        public static HashSet<string> CrossOriginItems = new HashSet<string>
+        {
+            "integrity",
+            "crossorigin"
+        };
+
         public static HashSet<string> BinaryNodes = new HashSet<string>
         {
             "img",

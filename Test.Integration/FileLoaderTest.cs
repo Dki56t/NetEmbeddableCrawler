@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Crawler.Logic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

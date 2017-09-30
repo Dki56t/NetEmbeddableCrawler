@@ -39,10 +39,19 @@ namespace Crawler.Logic
             if (depth == 0)
                 return;
 
-            var links = node.Descendants()
-                .SelectMany(x => x.Attributes)
-                .Where(x => Constant.LinkItems.Contains(x.Name))
-                .ToArray();
+            var links = new List<HtmlAttribute>();
+
+            //find all links
+            foreach (var element in node.Descendants()
+                .SelectMany(x => x.Attributes).ToArray())
+            {
+                if(Constant.LinkItems.Contains(element.Name))
+                    links.Add(element);
+
+                //remove crossorigin for correct work in chrome
+                if(Constant.CrossOriginItems.Contains(element.Name))
+                    element.Remove();
+            }
 
             foreach (var link in links)
             {
@@ -78,16 +87,16 @@ namespace Crawler.Logic
                         continue; //if we can't parse document just skip link
                     }
                     
-                    var newItem = ProcessItem(item, doc.DocumentNode.OuterHtml, null, link, processedUrls, uri);
+                    var newItem = ProcessContent(item, doc.DocumentNode.OuterHtml, null, link, processedUrls, uri);
                     await Walk(newItem, doc.DocumentNode, loader, processedUrls, newRoot, depth - 1);
                 }
                 else if (type == NodeType.Text)
                 {
-                    ProcessItem(item, await loader.LoadString(uri), null, link, processedUrls, uri);
+                    ProcessContent(item, await loader.LoadString(uri), null, link, processedUrls, uri);
                 }
                 else if(type == NodeType.Binary)
                 {
-                    ProcessItem(item, null, await loader.LoadBytes(uri), link, processedUrls, uri);
+                    ProcessContent(item, null, await loader.LoadBytes(uri), link, processedUrls, uri);
                 }
                 //type == NodeType.Mail just ignored, partial will be normalized and processed as html
             }
@@ -102,6 +111,7 @@ namespace Crawler.Logic
             return _cfg.FullTraversal || newRootUri.Host == currentRootUri.Host;
         }
 
+        //Load html document from url
         private async Task<HtmlDocument> LoadDocument(FileLoader loader, string url)
         {
             string pageStr = await loader.LoadString(url);
@@ -114,7 +124,7 @@ namespace Crawler.Logic
             return doc;
         }
 
-        private Item ProcessItem(
+        private Item ProcessContent(
             Item parent,
             string stringContent, byte[] binaryContent, 
             HtmlAttribute link,
@@ -130,7 +140,8 @@ namespace Crawler.Logic
             
             //replace url with path in filesystem
             var path = _mapper.GetPath(newItem);
-            link.Value = $"{path}{UrlHelper.GetPartialUrl(uri)}";
+            if (UrlHelper.IsExternalLink(link.Value))
+                link.Value = $"{path}{UrlHelper.GetPartialUrl(uri)}";
 
             return newItem;
         }

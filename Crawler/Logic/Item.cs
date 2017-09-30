@@ -13,19 +13,19 @@ namespace Crawler.Logic
         private HashSet<Item> Items { get; }
         public byte[] ByteContent { get; }
         public string Content { get; private set; }
-        public string Path { get; }
+        public string Uri { get; }
 
-        public Item(string content, string path)
+        public Item(string content, string uri)
         {
             Content = content;
-            Path = path;
+            Uri = uri;
             Items = new HashSet<Item>();
         }
 
-        public Item(byte[] content, string path)
+        public Item(byte[] content, string uri)
         {
             ByteContent = content;
-            Path = path;
+            Uri = uri;
             Items = new HashSet<Item>();
         }
 
