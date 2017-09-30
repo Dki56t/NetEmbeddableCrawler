@@ -54,6 +54,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ItemTest.cs" />
     <Compile Include="UrlHelperTest.cs" />
     <Compile Include="HtmlHelperTest.cs" />
     <Compile Include="UrlMapperTest.cs" />
