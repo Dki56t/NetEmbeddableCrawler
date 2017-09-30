@@ -31,9 +31,9 @@ namespace Crawler.Logic
 
         public string GetStringContent()
         {
-            if (string.IsNullOrEmpty(Content))
-                return null;
-            return Content;
+            return string.IsNullOrEmpty(Content) 
+                ? null 
+                : Content;
         }
 
         public void AddItem(Item item)
@@ -59,11 +59,13 @@ namespace Crawler.Logic
             return GetRoot(this);
         }
 
-        private Item GetRoot(Item item)
+        private static Item GetRoot(Item item)
         {
-            if (item._parent != null)
-                return GetRoot(item._parent);
-            return item;
+            while (true)
+            {
+                if (item._parent == null) return item;
+                item = item._parent;
+            }
         }
 
         public void UpdateContent(string content)

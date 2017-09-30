@@ -28,7 +28,7 @@ namespace Crawler
 
         public static HashSet<string> BinaryNodes = new HashSet<string>
         {
-            "img",
+            "img"
         };
     }
 }

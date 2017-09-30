@@ -63,17 +63,19 @@ namespace Crawler.Logic
                 return true;
             }
             var ex = GetFirstException(exception);
-            if (ex is SocketException socketException
-                && (socketException.SocketErrorCode == SocketError.AccessDenied ||
-                    socketException.SocketErrorCode == SocketError.TimedOut || //www.linkedin.com
-                    socketException.SocketErrorCode == SocketError.ConnectionReset)) //ru.linkedin.com
-                return true;
-            return false;
+            return ex is SocketException socketException
+                   && (socketException.SocketErrorCode == SocketError.AccessDenied ||
+                       socketException.SocketErrorCode == SocketError.TimedOut || //www.linkedin.com
+                       socketException.SocketErrorCode == SocketError.ConnectionReset); //ru.linkedin.com
         }
 
-        private Exception GetFirstException(Exception ex)
+        private static Exception GetFirstException(Exception ex)
         {
-            return ex.InnerException != null ? GetFirstException(ex.InnerException) : ex;
+            while (true)
+            {
+                if (ex.InnerException == null) return ex;
+                ex = ex.InnerException;
+            }
         }
     }
 }

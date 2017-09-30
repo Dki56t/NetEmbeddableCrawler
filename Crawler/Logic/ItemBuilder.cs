@@ -19,17 +19,13 @@ namespace Crawler.Logic
 
         public async Task<Item> Build(FileLoader loader)
         {
-            Item item = null;
-
             var rootLink = UrlHelper.NormalizeUrl(_cfg.RootLink);
             var htmlDoc = await LoadDocument(loader, rootLink);
-            if (htmlDoc != null)
-            {
-                item = new Item(htmlDoc.DocumentNode.OuterHtml, rootLink);
-                _mapper.GetPath(item);
-                await Walk(item, htmlDoc.DocumentNode, loader, new HashSet<string> { rootLink }, rootLink,
-                    _cfg.Depth);
-            }
+            if (htmlDoc == null) return null;
+            var item = new Item(htmlDoc.DocumentNode.OuterHtml, rootLink);
+            _mapper.GetPath(item);
+            await Walk(item, htmlDoc.DocumentNode, loader, new HashSet<string> { rootLink }, rootLink,
+                _cfg.Depth);
 
             return item;
         }

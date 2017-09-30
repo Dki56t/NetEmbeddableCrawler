@@ -22,8 +22,8 @@ namespace Crawler
             };
 
             var mapper = new UrlMapper(cfg);
-            var t = new ItemBuilder(cfg, mapper);
-            var root = t.Build(loader).Result;
+            var builder = new ItemBuilder(cfg, mapper);
+            var root = builder.Build(loader).Result;
 
             ItemWriter.Write(root, mapper);
         }

@@ -62,7 +62,7 @@ namespace Test.Integration
             Assert.IsTrue(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2\\otherinternal\\some.html")));
         }
 
-        private void FillAllFileNames(DirectoryInfo di, List<string> fileNames)
+        private static void FillAllFileNames(DirectoryInfo di, List<string> fileNames)
         {
             fileNames.Add(di.FullName);
             foreach (var fileInfo in di.EnumerateFiles())
