@@ -1,10 +1,8 @@
-﻿using System.IO;
-using System.Net;
-using Crawler;
+﻿using System.Net;
 using Crawler.Logic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Test.Unit
+namespace Test.Integration
 {
     [TestClass]
     public class FileLoaderTest

@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FileLoaderTest.cs" />
+    <Compile Include="ItemBuilderTest.cs" />
     <Compile Include="ItemWriterTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

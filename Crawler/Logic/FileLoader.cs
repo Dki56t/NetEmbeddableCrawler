@@ -16,7 +16,7 @@ namespace Crawler.Logic
             _client = client;
         }
 
-        public byte[] LoadBytes(string url)
+        public virtual byte[] LoadBytes(string url)
         {
             try
             {
@@ -30,7 +30,7 @@ namespace Crawler.Logic
             }
         }
 
-        public string LoadString(string url)
+        public virtual string LoadString(string url)
         {
             try
             {

@@ -1,56 +1,66 @@
-﻿using System;
-using System.IO;
+﻿using System.Linq;
 using System.Net;
 using Crawler;
 using Crawler.Logic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace Test.Unit
 {
     [TestClass]
     public class ItemBuilderTest
     {
-        private string _testHtml;
-        private string _testFormHtml;
-        private string _testJs;
-        private string _testCss;
-        private string _testImage;
-        private string _testText;
+        private Configuration _cfg;
+        private UrlMapper _mapper;
 
         [TestInitialize]
         public void Init()
         {
-            _testHtml = File.ReadAllText("TestPageSimple.html");
-            _testFormHtml = "<form action=\"http://www.dev2dev.ru/visitors/apply/\"></form>";
-            _testJs = "<script src=\"https://ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js\"></script>";
-        }
-
-
-        [TestMethod]
-        public void TestLinkCount()
-        {
-            //8 link in document
-        }
-
-
-        [TestMethod]
-        public void TestSkipForm()
-        {
-            using (WebClient client = new WebClient())
+            _cfg = new Configuration
             {
-                FileLoader loader = new FileLoader(client);
-                string testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
-                var cfg = new Configuration
-                {
-                    RootLink = "http://html-agility-pack.net/",
-                    Depth = 2,
-                    DestinationFolder = testDirectoryPath,
-                    FullTraversal = false
-                };
-                var mapper = new UrlMapper(cfg);
-                var t = new ItemBuilder(cfg, mapper);
-                t.Build(loader);
-            }
+                RootLink = "http://site1.com",
+                Depth = 3,
+                FullTraversal = false
+            };
+            _mapper = new Mock<UrlMapper>(_cfg).Object;
+        }
+
+        [TestMethod]
+        public void TestItemTreeBuilding()
+        {
+            var loader = new Mock<FileLoader>(new Mock<WebClient>().Object);
+            loader.Setup(x => x.LoadString("http://site1.com")).Returns("<body><a href=\"http://site1.com/sub-page\"> </a></body>");
+            loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns("<body></body>");
+
+            var builder = new ItemBuilder(_cfg, _mapper);
+            var item = builder.Build(loader.Object);
+
+            Assert.AreEqual(item.Path, "http://site1.com");
+            Assert.AreEqual(item.GetSubItems().Count, 1);
+            Assert.AreEqual(item.GetSubItems().Single().Path, "http://site1.com/sub-page");
+        }
+
+        [TestMethod]
+        public void TestLoadingHappensOnlyOnce()
+        {
+            var loader = new Mock<FileLoader>(new Mock<WebClient>().Object);
+            loader.Setup(x => x.LoadString("http://site1.com")).Returns("<body>" +
+                                                                        "<a href=\"http://site1.com/sub-page\"> </a>" +
+                                                                        "<a href=\"http://site1.com/sub-page\"> </a>" +
+                                                                        "<a href=\"http://site1.com/sub-page\"> </a></body>");
+            loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns("<body>" +
+                                                                                 "<a href=\"http://site1.com/sub-page\"> </a>" +
+                                                                                 "<a href=\"http://site1.com/\"> </a>" +
+                                                                                 "</body>");
+
+            var builder = new ItemBuilder(_cfg, _mapper);
+            var item = builder.Build(loader.Object);
+
+            Assert.AreEqual(item.Path, "http://site1.com");
+            Assert.AreEqual(item.GetSubItems().Count, 1);
+            Assert.AreEqual(item.GetSubItems().Single().Path, "http://site1.com/sub-page");
+            loader.Verify(x => x.LoadString("http://site1.com/sub-page"), Times.Once);
+            loader.Verify(x => x.LoadString("http://site1.com"), Times.Once);
         }
     }
 }

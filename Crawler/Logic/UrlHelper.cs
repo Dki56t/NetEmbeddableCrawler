@@ -38,9 +38,13 @@ namespace Crawler.Logic
 
         public static string BuildRelativeUri(string root, string relative)
         {
-            if (root.EndsWith("/") || relative.StartsWith("/"))
+            const string delimeter = "/";
+
+            if (root.EndsWith(delimeter) && relative.StartsWith(delimeter))
+                root = root.Remove(root.LastIndexOf(delimeter, StringComparison.Ordinal));
+            if (root.EndsWith(delimeter) || relative.StartsWith(delimeter))
                 return $"{root}{relative}";
-            return $"{root}/{relative}";
+            return $"{root}{delimeter}{relative}";
         }
     }
 }
