@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Net;
+using System.Net.Sockets;
 
 namespace Crawler.Logic
 {
-    /// <inheritdoc />
     /// <summary>
     /// Use it to download file from the web
     /// </summary>
-    internal class FileLoader : IDisposable
+    internal class FileLoader
     {
         private readonly WebClient _client;
 
-        public FileLoader()
+        public FileLoader(WebClient client)
         {
-            _client = new WebClient();
+            _client = client;
         }
 
         public byte[] LoadBytes(string url)
@@ -44,9 +44,9 @@ namespace Crawler.Logic
             }
         }
 
-        private bool AllowSkipException(WebException eception)
+        private bool AllowSkipException(WebException exception)
         {
-            var webResp = eception.Response as HttpWebResponse;
+            var webResp = exception.Response as HttpWebResponse;
             if (webResp != null && webResp.StatusCode == HttpStatusCode.Forbidden)
             {
                 //access is forbidden
@@ -59,12 +59,18 @@ namespace Crawler.Logic
                 //we can log it and continue
                 return true;
             }
+            var ex = GetFirstException(exception);
+            if (ex is SocketException socketException
+                && (socketException.SocketErrorCode == SocketError.AccessDenied ||
+                    socketException.SocketErrorCode == SocketError.TimedOut || //www.linkedin.com
+                    socketException.SocketErrorCode == SocketError.ConnectionReset)) //ru.linkedin.com
+                return true;
             return false;
         }
 
-        public void Dispose()
+        private Exception GetFirstException(Exception ex)
         {
-            _client.Dispose();
+            return ex.InnerException != null ? GetFirstException(ex.InnerException) : ex;
         }
     }
 }

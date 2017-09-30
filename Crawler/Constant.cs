@@ -11,7 +11,6 @@ namespace Crawler
         public static HashSet<string> TxtFileExtensions = new HashSet<string>
         {
             ".txt",
-            ".html",
             ".xml",
             ".js",
             ".css",

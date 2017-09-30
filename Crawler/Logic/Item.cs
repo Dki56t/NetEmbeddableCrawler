@@ -38,7 +38,7 @@ namespace Crawler.Logic
 
         public void AddItem(Item item)
         {
-            if(_parent != null)
+            if(item._parent != null)
                 throw new InvalidOperationException("Item can't have more than one parent");
 
             item._parent = this;

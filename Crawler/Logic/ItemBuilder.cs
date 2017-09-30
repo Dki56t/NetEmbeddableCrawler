@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using HtmlAgilityPack;
 
@@ -9,22 +8,26 @@ namespace Crawler.Logic
     internal class ItemBuilder
     {
         private readonly Configuration _cfg;
+        private readonly UrlMapper _mapper;
 
-        public ItemBuilder(Configuration cfg)
+        public ItemBuilder(Configuration cfg, UrlMapper mapper)
         {
             _cfg = cfg;
+            _mapper = mapper;
         }
 
-        public Item Build()
+        public Item Build(FileLoader loader)
         {
             Item item = null;
-            using (FileLoader loader = new FileLoader())
+
             {
-                var htmlDoc = LoadDocument(loader, _cfg.RootLink);
+                var rootLink = UrlHelper.NormalizeUrl(_cfg.RootLink);
+                var htmlDoc = LoadDocument(loader, rootLink);
                 if (htmlDoc != null)
                 {
-                    item = new Item(htmlDoc.DocumentNode.OuterHtml, _cfg.RootLink);
-                    Walk(item, htmlDoc.DocumentNode, loader, new HashSet<string> {_cfg.RootLink}, _cfg.RootLink,
+                    item = new Item(htmlDoc.DocumentNode.OuterHtml, rootLink);
+                    _mapper.GetPath(item);
+                    Walk(item, htmlDoc.DocumentNode, loader, new HashSet<string> { rootLink }, rootLink,
                         _cfg.Depth);
                 }
             }
@@ -44,47 +47,76 @@ namespace Crawler.Logic
 
             foreach (var link in links)
             {
-                var type = ResolveType(link.OwnerNode, link.Value);
-                var subPath = UrlHelper.IsExternalLink(link.Value) ? link.Value : BuildRelativeUri(root, link.Value);
-                if(processedUrls.Contains(subPath))
-                    continue;
+                var uri = UrlHelper.IsExternalLink(link.Value)
+                    ? link.Value
+                    : UrlHelper.BuildRelativeUri(root, link.Value);
+                uri = UrlHelper.NormalizeUrl(uri);
+                var partialPart = UrlHelper.GetPartialUrl(uri);
+                var newRoot = UrlHelper.ExtractRoot(uri);
 
+                //check crawling is allow
+                if (!CrawlingIsAllowed(root, newRoot))
+                {
+                    processedUrls.Add(uri);
+                    continue; 
+                }
+
+                //check already processed
+                if (processedUrls.Contains(uri))
+                {
+                    link.Value = $"{_mapper.GetProcessedPathByUrl(uri)}{partialPart}";
+                    continue;
+                }
+
+                //walking
+                Item newItem = null;
+                var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
                 if (type == NodeType.Html)
                 {
-                    var doc = LoadDocument(loader, subPath);
+                    var doc = LoadDocument(loader, uri);
                     if(doc == null)
+                    {
+                        processedUrls.Add(uri);
                         continue; //if we can't parse document just skip link
+                    }
 
-                    var descItem = new Item(doc.DocumentNode.OuterHtml, subPath);
-                    item.AddItem(descItem);
-                    Walk(descItem, doc.DocumentNode, loader, processedUrls, UrlHelper.ExtractRoot(subPath), depth - 1);
+                    newItem = new Item(doc.DocumentNode.OuterHtml, uri);
+                    item.AddItem(newItem);
+
+                    Walk(newItem, doc.DocumentNode, loader, processedUrls, newRoot, depth - 1);
                 }
                 else if (type == NodeType.Text)
                 {
-                    item.AddItem(new Item(loader.LoadString(subPath), subPath));
+                    newItem = new Item(loader.LoadString(uri), uri);
+                    item.AddItem(newItem);
                 }
                 else if(type == NodeType.Binary)
                 {
-                    item.AddItem(new Item(loader.LoadBytes(subPath), subPath));
+                    newItem = new Item(loader.LoadBytes(uri), uri);
+                    item.AddItem(newItem);
                 }
                 //type == NodeType.Partial and NodeType.Mail just ignored
 
-                processedUrls.Add(subPath);
+                //replace url with path in filesystem
+                if (newItem != null)
+                {
+                    var path = _mapper.GetPath(newItem);
+                    link.Value = $"{path}{partialPart}";
+                }
+
+                processedUrls.Add(uri);
             }
         }
 
-        private string BuildRelativeUri(string root, string relative)
+        private bool CrawlingIsAllowed(string root, string newRoot)
         {
-            if (root.EndsWith("/") || relative.StartsWith("/"))
-                return $"{root}{relative}";
-            return $"{root}/{relative}";
+            var newRootUri = new Uri(newRoot);
+            var currentRootUri = new Uri(root);
+            return _cfg.FullTraversal || newRootUri.Host == currentRootUri.Host;
         }
 
         private HtmlDocument LoadDocument(FileLoader loader, string url)
         {
-            if (url.StartsWith("//"))
-                url = url.Insert(0, "https:");
-
             string pageStr = loader.LoadString(url);
             if (string.IsNullOrEmpty(pageStr))
                 return null;
@@ -93,32 +125,6 @@ namespace Crawler.Logic
             doc.LoadHtml(pageStr);
 
             return doc;
-        }
-
-        private NodeType ResolveType(HtmlNode node, string url)
-        {
-            if (Constant.BinaryNodes.Contains(node.Name))
-                return NodeType.Binary;
-
-            var ext = Path.GetExtension(url);
-            if (url.StartsWith("#"))
-                return NodeType.Partial;
-            if (url.StartsWith("mailto"))
-                return NodeType.Mail;
-            if (Constant.TxtFileExtensions.Contains(ext))
-                return NodeType.Text;
-            if (string.IsNullOrEmpty(ext))
-                return NodeType.Html;
-            return NodeType.Binary;
-        }
-
-        public enum NodeType
-        {
-            Html,
-            Text,
-            Binary,
-            Partial,
-            Mail
         }
     }
 }

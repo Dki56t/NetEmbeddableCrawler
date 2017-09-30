@@ -50,6 +50,15 @@ namespace Crawler.Logic
             return filePath;
         }
 
+        public string GetProcessedPathByUrl(string url)
+        {
+            var normalizedUrl = UrlHelper.NormalizeUrl(url);
+            if (_map.ContainsKey(normalizedUrl))
+                return _map[normalizedUrl];
+            
+            throw new InvalidOperationException($"Path {url} not processed yet.");
+        }
+
         private static string GetFileNameOrDefault(string fileName)
         {
             return string.IsNullOrEmpty(fileName) ? "index.html" : fileName;

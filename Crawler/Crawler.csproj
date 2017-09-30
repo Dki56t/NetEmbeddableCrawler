@@ -48,6 +48,7 @@
     <Compile Include="Configuration.cs" />
     <Compile Include="Constant.cs" />
     <Compile Include="Logic\FileLoader.cs" />
+    <Compile Include="Logic\HtmlHelper.cs" />
     <Compile Include="Logic\Item.cs" />
     <Compile Include="Logic\ItemBuilder.cs" />
     <Compile Include="Logic\ItemWriter.cs" />

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using Crawler;
 using Crawler.Logic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -7,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Test.Unit
 {
     [TestClass]
-    public class UnitTest1
+    public class ItemBuilderTest
     {
         private string _testHtml;
         private string _testFormHtml;
@@ -35,12 +36,21 @@ namespace Test.Unit
         [TestMethod]
         public void TestSkipForm()
         {
-            var t = new ItemBuilder(new Configuration
+            using (WebClient client = new WebClient())
             {
-                RootLink = "http://html-agility-pack.net/",
-                Depth = 2
-            });
-            t.Build();
+                FileLoader loader = new FileLoader(client);
+                string testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
+                var cfg = new Configuration
+                {
+                    RootLink = "http://html-agility-pack.net/",
+                    Depth = 2,
+                    DestinationFolder = testDirectoryPath,
+                    FullTraversal = false
+                };
+                var mapper = new UrlMapper(cfg);
+                var t = new ItemBuilder(cfg, mapper);
+                t.Build(loader);
+            }
         }
     }
 }
