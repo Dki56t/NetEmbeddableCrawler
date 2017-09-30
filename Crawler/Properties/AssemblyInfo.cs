@@ -38,3 +38,4 @@ using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("Test.Unit")]
 [assembly: InternalsVisibleTo("Test.Integration")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]

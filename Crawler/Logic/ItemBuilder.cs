@@ -20,16 +20,14 @@ namespace Crawler.Logic
         {
             Item item = null;
 
+            var rootLink = UrlHelper.NormalizeUrl(_cfg.RootLink);
+            var htmlDoc = LoadDocument(loader, rootLink);
+            if (htmlDoc != null)
             {
-                var rootLink = UrlHelper.NormalizeUrl(_cfg.RootLink);
-                var htmlDoc = LoadDocument(loader, rootLink);
-                if (htmlDoc != null)
-                {
-                    item = new Item(htmlDoc.DocumentNode.OuterHtml, rootLink);
-                    _mapper.GetPath(item);
-                    Walk(item, htmlDoc.DocumentNode, loader, new HashSet<string> { rootLink }, rootLink,
-                        _cfg.Depth);
-                }
+                item = new Item(htmlDoc.DocumentNode.OuterHtml, rootLink);
+                _mapper.GetPath(item);
+                Walk(item, htmlDoc.DocumentNode, loader, new HashSet<string> { rootLink }, rootLink,
+                    _cfg.Depth);
             }
 
             return item;

@@ -18,7 +18,7 @@ namespace Crawler.Logic
             _outputDirectory = cfg.DestinationFolder;
         }
 
-        public string GetPath(Item item)
+        public virtual string GetPath(Item item)
         {
             var normalizedUrl = UrlHelper.NormalizeUrl(item.Path);
             if (_map.ContainsKey(normalizedUrl))
@@ -50,7 +50,7 @@ namespace Crawler.Logic
             return filePath;
         }
 
-        public string GetProcessedPathByUrl(string url)
+        public virtual string GetProcessedPathByUrl(string url)
         {
             var normalizedUrl = UrlHelper.NormalizeUrl(url);
             if (_map.ContainsKey(normalizedUrl))

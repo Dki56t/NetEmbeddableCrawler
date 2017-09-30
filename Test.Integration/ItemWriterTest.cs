@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Crawler;
 using Crawler.Logic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace Test.Integration
 {
@@ -12,6 +14,7 @@ namespace Test.Integration
         [TestMethod]
         public void TestFileWrite()
         {
+            //setup
             string testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
             var di = new DirectoryInfo(testDirectoryPath);
             if (di.Exists)
@@ -20,18 +23,28 @@ namespace Test.Integration
                 di.Create();
 
             var item1= new Item("1", "http://site1/index.html");
-            item1.AddItem(new Item("1/internal", "http://site1/internal/internal.html"));
+            var item11 = new Item("1/internal", "http://site1/internal/internal.html");
+            item1.AddItem(item11);
             var item2 = new Item("2", "http://site2/index.html");
-            item2.AddItem(new Item("2/internal", "http://site2/otherinternal/some.html"));
+            var item21 = new Item("2/internal", "http://site2/otherinternal/some.html");
+            item2.AddItem(item21);
+            item1.AddItem(item2);
 
-            ItemWriter.Write(new List<Item>
+            var mapper = new Mock<UrlMapper>(new Configuration
             {
-                item1,
-                item2
-            }, di.FullName);
+                DestinationFolder = testDirectoryPath
+            });
+            mapper.Setup(x => x.GetPath(item1)).Returns(Path.Combine(testDirectoryPath, "site1\\index.html"));
+            mapper.Setup(x => x.GetPath(item11)).Returns(Path.Combine(testDirectoryPath, "site1\\internal\\internal.html"));
+            mapper.Setup(x => x.GetPath(item2)).Returns(Path.Combine(testDirectoryPath, "site2\\index.html"));
+            mapper.Setup(x => x.GetPath(item21)).Returns(Path.Combine(testDirectoryPath, "site2\\otherinternal\\some.html"));
+
+            //act
+            ItemWriter.Write(item1, mapper.Object);
             var fileNames = new List<string>();
             FillAllFileNames(di, fileNames);
 
+            //verify
             Assert.AreEqual(fileNames.Count, 9);
             Assert.IsTrue(fileNames.Contains(testDirectoryPath));
             Assert.IsTrue(fileNames.Contains(Path.Combine(testDirectoryPath, "site1")));
