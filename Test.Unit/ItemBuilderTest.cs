@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Crawler;
 using Crawler.Logic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -28,12 +29,12 @@ namespace Test.Unit
         [TestMethod]
         public void TestItemTreeBuilding()
         {
-            var loader = new Mock<FileLoader>(new Mock<WebClient>().Object);
-            loader.Setup(x => x.LoadString("http://site1.com")).Returns("<body><a href=\"http://site1.com/sub-page\"> </a></body>");
-            loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns("<body></body>");
+            var loader = new Mock<FileLoader>();
+            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult("<body><a href=\"http://site1.com/sub-page\"> </a></body>"));
+            loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns(Task.FromResult("<body></body>"));
 
             var builder = new ItemBuilder(_cfg, _mapper);
-            var item = builder.Build(loader.Object);
+            var item = builder.Build(loader.Object).Result;
 
             Assert.AreEqual(item.Path, "http://site1.com");
             Assert.AreEqual(item.GetSubItems().Count, 1);
@@ -43,18 +44,18 @@ namespace Test.Unit
         [TestMethod]
         public void TestLoadingHappensOnlyOnce()
         {
-            var loader = new Mock<FileLoader>(new Mock<WebClient>().Object);
-            loader.Setup(x => x.LoadString("http://site1.com")).Returns("<body>" +
+            var loader = new Mock<FileLoader>();
+            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult("<body>" +
                                                                         "<a href=\"http://site1.com/sub-page\"> </a>" +
                                                                         "<a href=\"http://site1.com/sub-page\"> </a>" +
-                                                                        "<a href=\"http://site1.com/sub-page\"> </a></body>");
-            loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns("<body>" +
+                                                                        "<a href=\"http://site1.com/sub-page\"> </a></body>"));
+            loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns(Task.FromResult("<body>" +
                                                                                  "<a href=\"http://site1.com/sub-page\"> </a>" +
                                                                                  "<a href=\"http://site1.com/\"> </a>" +
-                                                                                 "</body>");
+                                                                                 "</body>"));
 
             var builder = new ItemBuilder(_cfg, _mapper);
-            var item = builder.Build(loader.Object);
+            var item = builder.Build(loader.Object).Result;
 
             Assert.AreEqual(item.Path, "http://site1.com");
             Assert.AreEqual(item.GetSubItems().Count, 1);

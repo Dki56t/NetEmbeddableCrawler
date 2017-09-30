@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 using Crawler;
 using Crawler.Logic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -10,23 +11,20 @@ namespace Test.Integration
     public class ItemBuilderTest
     {
         [TestMethod]
-        public void TestCrawling()
+        public async Task TestCrawling()
         {
-            using (WebClient client = new WebClient())
+            FileLoader loader = new FileLoader();
+            string testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
+            var cfg = new Configuration
             {
-                FileLoader loader = new FileLoader(client);
-                string testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
-                var cfg = new Configuration
-                {
-                    RootLink = "http://html-agility-pack.net/",
-                    Depth = 3,
-                    DestinationFolder = testDirectoryPath,
-                    FullTraversal = false
-                };
-                var mapper = new UrlMapper(cfg);
-                var t = new ItemBuilder(cfg, mapper);
-                t.Build(loader);
-            }
+                RootLink = "http://html-agility-pack.net/",
+                Depth = 3,
+                DestinationFolder = testDirectoryPath,
+                FullTraversal = false
+            };
+            var mapper = new UrlMapper(cfg);
+            var t = new ItemBuilder(cfg, mapper);
+            await t.Build(loader);
         }
     }
 }

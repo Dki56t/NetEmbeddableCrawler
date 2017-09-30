@@ -67,5 +67,21 @@ namespace Test.Unit
             Assert.AreEqual(mapper.GetPath(item3), Path.Combine(_testDirectoryPath, "site3\\index.html"));
             Assert.AreEqual(mapper.GetPath(item31), Path.Combine(_testDirectoryPath, "site3\\test\\some.html"));
         }
+
+        [TestMethod]
+        public void TestFileNameAppendExtension()
+        {
+            var item1 = new Item("1", "http://site1/");
+            var item11 = new Item("1/internal", "http://site1/test/some");
+            item1.AddItem(item11);
+
+            var mapper = new UrlMapper(new Configuration
+            {
+                DestinationFolder = _testDirectoryPath
+            });
+
+            Assert.AreEqual(mapper.GetPath(item1), Path.Combine(_testDirectoryPath, "site1\\index.html"));
+            Assert.AreEqual(mapper.GetPath(item11), Path.Combine(_testDirectoryPath, "site1\\test\\some.html"));
+        }
     }
 }

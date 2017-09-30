@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Threading.Tasks;
 using Crawler.Logic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -8,13 +9,10 @@ namespace Test.Integration
     public class FileLoaderTest
     {
         [TestMethod]
-        public void TestSkipExceptions()
+        public async Task TestSkipExceptions()
         {
-            using (WebClient client = new WebClient())
-            {
-                FileLoader loader = new FileLoader(client);
-                loader.LoadString("https://ru.linkedin.com");
-            }
+            FileLoader loader = new FileLoader();
+            await loader.LoadString("https://ru.linkedin.com");
         }
     }
 }

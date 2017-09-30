@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace Crawler.Logic
 {
@@ -9,18 +10,16 @@ namespace Crawler.Logic
     /// </summary>
     internal class FileLoader
     {
-        private readonly WebClient _client;
-
-        public FileLoader(WebClient client)
+        public virtual async Task<byte[]> LoadBytes(string url)
         {
-            _client = client;
-        }
 
-        public virtual byte[] LoadBytes(string url)
-        {
             try
             {
-                return _client.DownloadData(url);
+                return await Task.Run(() =>
+                {
+                    using (WebClient client = new WebClient())
+                        return client.DownloadData(url);
+                });
             }
             catch (WebException ex)
             {
@@ -30,11 +29,15 @@ namespace Crawler.Logic
             }
         }
 
-        public virtual string LoadString(string url)
+        public virtual async Task<string> LoadString(string url)
         {
             try
             {
-                return _client.DownloadString(url);
+                return await Task.Run(() =>
+                {
+                    using (WebClient client = new WebClient())
+                        return client.DownloadString(url);
+                });
             }
             catch (WebException ex)
             {

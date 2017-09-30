@@ -28,7 +28,7 @@ namespace Crawler.Logic
             var fileName = Path.GetFileName(uri.LocalPath);
             //subUrl it is a part of url between host name and last segment (if last segment is file name)
             var subUrl = Path.GetDirectoryName(uri.LocalPath);
-            //if subUrl is empty, it won't insert into link
+            //if subUrl is empty, it won't inserted into link
             if (subUrl == null || subUrl == "\\")
                 subUrl = string.Empty;
 
@@ -61,7 +61,12 @@ namespace Crawler.Logic
 
         private static string GetFileNameOrDefault(string fileName)
         {
-            return string.IsNullOrEmpty(fileName) ? "index.html" : fileName;
+            if (string.IsNullOrEmpty(fileName))
+                return "index.html";
+            if (!Path.HasExtension(fileName))
+                return Path.ChangeExtension(fileName, ".html");
+
+            return fileName;
         }
     }
 }

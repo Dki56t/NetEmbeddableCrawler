@@ -8,23 +8,20 @@ namespace Crawler
     {
         static void Main(string[] args)
         {
-            using (WebClient client = new WebClient())
+            FileLoader loader = new FileLoader();
+            string testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
+            var cfg = new Configuration
             {
-                FileLoader loader = new FileLoader(client);
-                string testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
-                var cfg = new Configuration
-                {
-                    RootLink = "http://html-agility-pack.net/",
-                    Depth = 3,
-                    DestinationFolder = testDirectoryPath,
-                    FullTraversal = false
-                };
-                var mapper = new UrlMapper(cfg);
-                var t = new ItemBuilder(cfg, mapper);
-                var root = t.Build(loader);
+                RootLink = "http://html-agility-pack.net/",
+                Depth = 2,
+                DestinationFolder = testDirectoryPath,
+                FullTraversal = true
+            };
+            var mapper = new UrlMapper(cfg);
+            var t = new ItemBuilder(cfg, mapper);
+            var root = t.Build(loader).Result;
 
-                ItemWriter.Write(root, mapper);
-            }
+            ItemWriter.Write(root, mapper);
         }
     }
 }

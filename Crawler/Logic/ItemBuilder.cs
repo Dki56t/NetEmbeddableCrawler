@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using HtmlAgilityPack;
 
 namespace Crawler.Logic
@@ -16,24 +17,24 @@ namespace Crawler.Logic
             _mapper = mapper;
         }
 
-        public Item Build(FileLoader loader)
+        public async Task<Item> Build(FileLoader loader)
         {
             Item item = null;
 
             var rootLink = UrlHelper.NormalizeUrl(_cfg.RootLink);
-            var htmlDoc = LoadDocument(loader, rootLink);
+            var htmlDoc = await LoadDocument(loader, rootLink);
             if (htmlDoc != null)
             {
                 item = new Item(htmlDoc.DocumentNode.OuterHtml, rootLink);
                 _mapper.GetPath(item);
-                Walk(item, htmlDoc.DocumentNode, loader, new HashSet<string> { rootLink }, rootLink,
+                await Walk(item, htmlDoc.DocumentNode, loader, new HashSet<string> { rootLink }, rootLink,
                     _cfg.Depth);
             }
 
             return item;
         }
 
-        private void Walk(Item item, HtmlNode node, FileLoader loader, HashSet<string> processedUrls, string root, int depth)
+        private async Task Walk(Item item, HtmlNode node, FileLoader loader, HashSet<string> processedUrls, string root, int depth)
         {
             if (depth == 0)
                 return;
@@ -70,7 +71,7 @@ namespace Crawler.Logic
                 var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
                 if (type == NodeType.Html)
                 {
-                    var doc = LoadDocument(loader, uri);
+                    var doc = await LoadDocument(loader, uri);
                     if(doc == null)
                     {
                         processedUrls.Add(uri);
@@ -78,17 +79,17 @@ namespace Crawler.Logic
                     }
                     
                     var newItem = ProcessItem(item, doc.DocumentNode.OuterHtml, null, link, processedUrls, uri);
-                    Walk(newItem, doc.DocumentNode, loader, processedUrls, newRoot, depth - 1);
+                    await Walk(newItem, doc.DocumentNode, loader, processedUrls, newRoot, depth - 1);
                 }
                 else if (type == NodeType.Text)
                 {
-                    ProcessItem(item, loader.LoadString(uri), null, link, processedUrls, uri);
+                    ProcessItem(item, await loader.LoadString(uri), null, link, processedUrls, uri);
                 }
                 else if(type == NodeType.Binary)
                 {
-                    ProcessItem(item, null, loader.LoadBytes(uri), link, processedUrls, uri);
+                    ProcessItem(item, null, await loader.LoadBytes(uri), link, processedUrls, uri);
                 }
-                //type == NodeType.Partial and NodeType.Mail just ignored
+                //type == NodeType.Mail just ignored, partial will be normalized and processed as html
             }
 
             item.UpdateContent(node.OuterHtml);
@@ -101,9 +102,9 @@ namespace Crawler.Logic
             return _cfg.FullTraversal || newRootUri.Host == currentRootUri.Host;
         }
 
-        private HtmlDocument LoadDocument(FileLoader loader, string url)
+        private async Task<HtmlDocument> LoadDocument(FileLoader loader, string url)
         {
-            string pageStr = loader.LoadString(url);
+            string pageStr = await loader.LoadString(url);
             if (string.IsNullOrEmpty(pageStr))
                 return null;
 
