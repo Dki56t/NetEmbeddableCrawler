@@ -67,7 +67,6 @@ namespace Crawler.Logic
                 }
 
                 //walking
-                Item newItem = null;
                 var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
                 if (type == NodeType.Html)
                 {
@@ -77,33 +76,22 @@ namespace Crawler.Logic
                         processedUrls.Add(uri);
                         continue; //if we can't parse document just skip link
                     }
-
-                    newItem = new Item(doc.DocumentNode.OuterHtml, uri);
-                    item.AddItem(newItem);
-
+                    
+                    var newItem = ProcessItem(item, doc.DocumentNode.OuterHtml, null, link, processedUrls, uri);
                     Walk(newItem, doc.DocumentNode, loader, processedUrls, newRoot, depth - 1);
                 }
                 else if (type == NodeType.Text)
                 {
-                    newItem = new Item(loader.LoadString(uri), uri);
-                    item.AddItem(newItem);
+                    ProcessItem(item, loader.LoadString(uri), null, link, processedUrls, uri);
                 }
                 else if(type == NodeType.Binary)
                 {
-                    newItem = new Item(loader.LoadBytes(uri), uri);
-                    item.AddItem(newItem);
+                    ProcessItem(item, null, loader.LoadBytes(uri), link, processedUrls, uri);
                 }
                 //type == NodeType.Partial and NodeType.Mail just ignored
-
-                //replace url with path in filesystem
-                if (newItem != null)
-                {
-                    var path = _mapper.GetPath(newItem);
-                    link.Value = $"{path}{partialPart}";
-                }
-
-                processedUrls.Add(uri);
             }
+
+            item.UpdateContent(node.OuterHtml);
         }
 
         private bool CrawlingIsAllowed(string root, string newRoot)
@@ -123,6 +111,27 @@ namespace Crawler.Logic
             doc.LoadHtml(pageStr);
 
             return doc;
+        }
+
+        private Item ProcessItem(
+            Item parent,
+            string stringContent, byte[] binaryContent, 
+            HtmlAttribute link,
+            HashSet<string> processedUrls,
+            string uri)
+        {
+            var newItem = binaryContent == null 
+                ? new Item(stringContent, uri) 
+                : new Item(binaryContent, uri);
+            parent.AddItem(newItem);
+
+            processedUrls.Add(uri);
+            
+            //replace url with path in filesystem
+            var path = _mapper.GetPath(newItem);
+            link.Value = $"{path}{UrlHelper.GetPartialUrl(uri)}";
+
+            return newItem;
         }
     }
 }

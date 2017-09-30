@@ -12,7 +12,7 @@ namespace Crawler.Logic
         private Item _parent;
         private HashSet<Item> Items { get; }
         public byte[] ByteContent { get; }
-        public string Content { get; }
+        public string Content { get; private set; }
         public string Path { get; }
 
         public Item(string content, string path)
@@ -64,6 +64,11 @@ namespace Crawler.Logic
             if (item._parent != null)
                 return GetRoot(item._parent);
             return item;
+        }
+
+        public void UpdateContent(string content)
+        {
+            Content = content;
         }
     }
 }
