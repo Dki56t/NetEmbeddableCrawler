@@ -14,6 +14,9 @@ namespace Crawler.Logic
             var partialIndex = url.IndexOf("/#", StringComparison.Ordinal);
             if (partialIndex > -1)
                 url = url.Remove(partialIndex);
+            partialIndex = url.IndexOf("#", StringComparison.Ordinal);
+            if (partialIndex > -1)
+                url = url.Remove(partialIndex);
             if (url.StartsWith("//"))
                 url = $"https:{url}";
             if (url.EndsWith("/"))
@@ -24,7 +27,10 @@ namespace Crawler.Logic
 
         public static string GetPartialUrl(string url)
         {
-            var index = url.IndexOf("/#", StringComparison.Ordinal);
+            var index = url.LastIndexOf("/#", StringComparison.Ordinal);
+            if (index > -1)
+                return url.Substring(index);
+            index = url.LastIndexOf("#", StringComparison.Ordinal);
             if (index > -1)
                 return url.Substring(index);
             return string.Empty;

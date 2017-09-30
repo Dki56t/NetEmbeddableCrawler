@@ -31,6 +31,7 @@ namespace Test.Unit
             Assert.AreEqual(UrlHelper.GetPartialUrl("http://site.com"), string.Empty);
             Assert.AreEqual(UrlHelper.GetPartialUrl("http://site.com/#"), "/#");
             Assert.AreEqual(UrlHelper.GetPartialUrl("http://site.com/#test"), "/#test");
+            Assert.AreEqual(UrlHelper.GetPartialUrl("http://site.com/test#part"), "#part");
         }
 
         [TestMethod]

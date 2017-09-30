@@ -7,11 +7,12 @@ namespace Crawler.Logic
     internal class UrlMapper
     {
         private readonly string _outputDirectory;
+        private const string Index = "index.html";
 
         /// <summary>
         /// Contains map url from html (as a key) to path in file system
         /// </summary>
-        private readonly Dictionary<string, string> _map = new Dictionary<string, string>();
+        public readonly Dictionary<string, string> _map = new Dictionary<string, string>();
 
         public UrlMapper(Configuration cfg)
         {
@@ -36,7 +37,7 @@ namespace Crawler.Logic
             var hostUrl = UrlHelper.ExtractRoot(normalizedUrl);
             if (!_map.ContainsKey(hostUrl))
             {
-                var hostPath = $"{_outputDirectory}\\{uri.Host}\\{GetFileNameOrDefault(fileName)}";
+                var hostPath = $"{_outputDirectory}\\{uri.Host}\\{Index}";
                 _map.Add(hostUrl, hostPath);
 
                 if (hostUrl == normalizedUrl)
@@ -44,7 +45,7 @@ namespace Crawler.Logic
             }
 
             var hostDirectoryPath = Path.GetDirectoryName(_map[hostUrl]);
-            var filePath = $"{hostDirectoryPath}{subUrl}\\{GetFileNameOrDefault(fileName)}";
+            var filePath = $"{hostDirectoryPath}{subUrl}\\{GetFileNameOrDefault(fileName + uri.Query.Replace("?", "_p_"))}";
 
             _map.Add(normalizedUrl, filePath);
             return filePath;
@@ -62,7 +63,7 @@ namespace Crawler.Logic
         private static string GetFileNameOrDefault(string fileName)
         {
             if (string.IsNullOrEmpty(fileName))
-                return "index.html";
+                return Index;
             if (!Path.HasExtension(fileName))
                 return Path.ChangeExtension(fileName, ".html");
 

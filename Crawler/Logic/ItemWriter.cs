@@ -1,11 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Crawler.Logic
 {
     internal static class ItemWriter
     {
         public static void Write(Item item, UrlMapper mapper)
+        {
+            var tasks = new List<Task>();
+            Write(item, mapper, tasks, new HashSet<string>());
+
+            Task.WaitAll(tasks.ToArray());
+        }
+
+        private static void Write(Item item, UrlMapper mapper, List<Task> tasks, HashSet<string> pathes)
         {
             var path = mapper.GetPath(item);
             var directoryPath = Path.GetDirectoryName(path);
@@ -14,23 +24,35 @@ namespace Crawler.Logic
 
             if (item.ByteContent != null)
             {
-                using (var stream = File.Create(path))
+                tasks.Add(Task.Run(() =>
                 {
-                    stream.Write(item.ByteContent, 0, item.ByteContent.Length);
-                    stream.Flush();
-                }
+                    if(pathes.Contains(path))
+                        throw new InvalidOperationException();
+                    pathes.Add(path);
+                    using (var stream = File.Create(path))
+                    {
+                        stream.Write(item.ByteContent, 0, item.ByteContent.Length);
+                        stream.Flush();
+                    }
+                }));
             }
             else
             {
-                using (var writer = File.CreateText(path))
+                tasks.Add(Task.Run(() =>
                 {
-                    writer.Write(item.Content);
-                    writer.Flush();
-                }
+                    if (pathes.Contains(path))
+                        throw new InvalidOperationException();
+                    pathes.Add(path);
+                    using (var writer = File.CreateText(path))
+                    {
+                        writer.Write(item.Content);
+                        writer.Flush();
+                    }
+                }));
             }
 
             foreach (var i in item.GetSubItems())
-                Write(i, mapper);
+                Write(i, mapper, tasks, pathes);
         }
     }
 }

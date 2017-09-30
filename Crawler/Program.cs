@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Linq;
 using System.Net;
 using Crawler.Logic;
 
@@ -13,14 +15,15 @@ namespace Crawler
             var cfg = new Configuration
             {
                 RootLink = "http://html-agility-pack.net/",
-                Depth = 2,
+                Depth = 3,
                 DestinationFolder = testDirectoryPath,
-                FullTraversal = true
+                FullTraversal = false
             };
             var mapper = new UrlMapper(cfg);
             var t = new ItemBuilder(cfg, mapper);
             var root = t.Build(loader).Result;
 
+            //Console.ReadLine();
             ItemWriter.Write(root, mapper);
         }
     }
