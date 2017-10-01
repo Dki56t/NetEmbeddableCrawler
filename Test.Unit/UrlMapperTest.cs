@@ -69,9 +69,11 @@ namespace Test.Unit
             {
                 DestinationFolder = _testDirectoryPath
             });
-
+            
             Assert.AreEqual(mapper.GetPath("http://site1/"), Path.Combine(_testDirectoryPath, "site1\\index.html"));
             Assert.AreEqual(mapper.GetPath("http://site1/test/some"), Path.Combine(_testDirectoryPath, "site1\\test\\some.html"));
+            Assert.AreEqual(mapper.GetPath("http://site1/css/style.css"), Path.Combine(_testDirectoryPath, "site1\\css\\style.css"));
+            Assert.AreEqual(mapper.GetPath("http://site1/test/1.5.5", NodeType.Html), Path.Combine(_testDirectoryPath, "site1\\test\\1.5.5.html"));
         }
 
         [TestMethod]

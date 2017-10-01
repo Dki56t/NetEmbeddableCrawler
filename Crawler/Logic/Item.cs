@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,7 +11,7 @@ namespace Crawler.Logic
     internal class Item
     {
         private Item _parent;
-        private HashSet<Item> Items { get; }
+        private ConcurrentBag<Item> Items { get; }
         public byte[] ByteContent { get; }
         public string Content { get; private set; }
         public string Uri { get; }
@@ -19,14 +20,14 @@ namespace Crawler.Logic
         {
             Content = content;
             Uri = uri;
-            Items = new HashSet<Item>();
+            Items = new ConcurrentBag<Item>();
         }
 
         public Item(byte[] content, string uri)
         {
             ByteContent = content;
             Uri = uri;
-            Items = new HashSet<Item>();
+            Items = new ConcurrentBag<Item>();
         }
 
         public void AddItem(Item item)

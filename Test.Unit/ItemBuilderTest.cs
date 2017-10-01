@@ -70,7 +70,7 @@ namespace Test.Unit
             var loader = new Mock<FileLoader>();
             loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult("<body><a href=\"css/style.css\"> </a></body>"));
             loader.Setup(x => x.LoadString("http://site1.com/css/style.css")).Returns(Task.FromResult(""));
-            mapper.Setup(x => x.GetPath("css/style.css"))
+            mapper.Setup(x => x.GetPath("css/style.css", NodeType.Text))
                 .Returns("directory/css/style.css");
 
             var builder = new ItemBuilder(_cfg, mapper.Object);

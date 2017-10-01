@@ -22,7 +22,9 @@ namespace Crawler.Logic
 
             if (Constant.TxtFileExtensions.Contains(ext))
                 return NodeType.Text;
-            if (string.IsNullOrEmpty(ext))
+            if (Constant.BinaryFileExtensions.Contains(ext))
+                return NodeType.Binary;
+            if (string.IsNullOrEmpty(ext) || Constant.HtmlNodes.Contains(nodeName))
                 return NodeType.Html;
             return NodeType.Binary;
         }

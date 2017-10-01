@@ -14,6 +14,11 @@ namespace Crawler
             ".sass"
         };
 
+        public static HashSet<string> BinaryFileExtensions = new HashSet<string>
+        {
+            ".jpeg",
+        };
+
         public static HashSet<string> LinkItems = new HashSet<string>
         {
             "src",
@@ -29,6 +34,11 @@ namespace Crawler
         public static HashSet<string> BinaryNodes = new HashSet<string>
         {
             "img"
+        };
+
+        public static HashSet<string> HtmlNodes = new HashSet<string>
+        {
+            "a"
         };
     }
 }

@@ -39,10 +39,10 @@ namespace Test.Integration
             {
                 DestinationFolder = _testDirectoryPath
             });
-            mapper.Setup(x => x.GetPath(item1.Uri)).Returns(Path.Combine(_testDirectoryPath, "site1\\index.html"));
-            mapper.Setup(x => x.GetPath(item11.Uri)).Returns(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html"));
-            mapper.Setup(x => x.GetPath(item2.Uri)).Returns(Path.Combine(_testDirectoryPath, "site2\\index.html"));
-            mapper.Setup(x => x.GetPath(item21.Uri)).Returns(Path.Combine(_testDirectoryPath, "site2\\otherinternal\\some.html"));
+            mapper.Setup(x => x.GetPath(item1.Uri, null)).Returns(Path.Combine(_testDirectoryPath, "site1\\index.html"));
+            mapper.Setup(x => x.GetPath(item11.Uri, null)).Returns(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html"));
+            mapper.Setup(x => x.GetPath(item2.Uri, null)).Returns(Path.Combine(_testDirectoryPath, "site2\\index.html"));
+            mapper.Setup(x => x.GetPath(item21.Uri, null)).Returns(Path.Combine(_testDirectoryPath, "site2\\otherinternal\\some.html"));
 
             //act
             ItemWriter.Write(item1, mapper.Object);

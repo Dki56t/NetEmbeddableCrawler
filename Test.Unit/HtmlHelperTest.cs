@@ -11,9 +11,11 @@ namespace Test.Unit
         {
             string url = "https://subdomain.domain.com";
             string urlPartial = "https://subdomain.domain.com/#23";
+            string urlNumbers = "https://subdomain.domain.com/1.2.5";
 
             Assert.AreEqual(HtmlHelper.ResolveType("a", url), NodeType.Html);
             Assert.AreEqual(HtmlHelper.ResolveType("a", urlPartial), NodeType.Html);
+            Assert.AreEqual(HtmlHelper.ResolveType("a", urlNumbers), NodeType.Html);
         }
 
         [TestMethod]

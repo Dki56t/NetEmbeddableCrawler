@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using HtmlAgilityPack;
 
 namespace Crawler.Logic
@@ -24,82 +23,66 @@ namespace Crawler.Logic
             var htmlDoc = await LoadDocument(loader, rootLink);
             if (htmlDoc == null) return null;
             var item = new Item(htmlDoc.DocumentNode.OuterHtml, rootLink);
-            _mapper.GetPath(item.Uri);
-            await Walk(item, htmlDoc.DocumentNode, loader, new HashSet<string> { rootLink }, rootLink,
+            _mapper.GetPath(item.Uri, NodeType.Html);
+            await Walk(item, htmlDoc.DocumentNode, loader, new Dictionary<string, Processing> { {rootLink, new Processing
+                {
+                    Owner = htmlDoc.DocumentNode,
+                    ContentIsProcessed = true
+                }} }, rootLink,
                 _cfg.Depth);
 
             return item;
         }
 
-        private async Task Walk(Item item, HtmlNode node, FileLoader loader, HashSet<string> processedUrls, string root, int depth)
+        private async Task Walk(Item item, HtmlNode node, FileLoader loader, Dictionary<string, Processing> processedUrls, string root, int depth)
         {
             if (depth == 0)
                 return;
 
-            var links = PreprocessNodeAndGetLink(node);
-            var tasks = new List<Task>();
+            var links = PreprocessNodeAndGetLink(node, processedUrls, root);
 
             foreach (var link in links)
             {
-                var uri = UrlHelper.IsExternalLink(link.Value)
-                    ? link.Value
-                    : UrlHelper.BuildRelativeUri(root, link.Value);
-                uri = UrlHelper.NormalizeUrl(uri);
+                var uri = PrepareUri(link.Value, root);
                 var partialPart = UrlHelper.GetPartialUrl(uri);
                 var newRoot = UrlHelper.ExtractRoot(uri);
 
                 //check crawling is allow
                 if (!CrawlingIsAllowed(root, newRoot))
                 {
-                    processedUrls.Add(uri);
-                    continue; 
-                }
-
-                //check already processed
-                if (processedUrls.Contains(uri))
-                {
-                    link.Value = $"{_mapper.GetPath(uri)}{partialPart}";
                     continue;
                 }
-                
-                //walking
-                var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
-                if (type == NodeType.Html)
-                {
-                    processedUrls.Add(uri);
-                    var doc = await LoadDocument(loader, uri);
-                    if(doc == null)
-                    {
-                        continue; //if we can't parse document just skip link
-                    }
 
-                    tasks.Add(Task.Run(async () =>
-                    {
-                        var newItem = ProcessContent(item, doc.DocumentNode.OuterHtml, null, link, uri);
+                //check continue processing
+                var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
+                if (UrlHelper.IsExternalLink(link.Value) || type == NodeType.Html)
+                    link.Value = $"{_mapper.GetPath(uri, type)}{partialPart}";
+                if (processedUrls[uri].Owner != node || processedUrls[uri].ContentIsProcessed)
+                    continue;
+                processedUrls[uri].ContentIsProcessed = true;
+
+                //walking
+                switch (type)
+                {
+                    case NodeType.Html:
+                        var doc = await LoadDocument(loader, uri);
+                        if (doc == null)
+                        {
+                            continue; //if we can't parse document just skip link
+                        }
+                        var newItem = ProcessContent(item, doc.DocumentNode.OuterHtml, null, link, type, uri);
                         await Walk(newItem, doc.DocumentNode, loader, processedUrls, newRoot, depth - 1);
-                    }
-                    ));
-                }
-                else if (type == NodeType.Text)
-                {
-                    processedUrls.Add(uri);
-                    tasks.Add(Task.Run(async () =>
-                    {
-                        ProcessContent(item, await loader.LoadString(uri), null, link, uri);
-                    }));
-                }
-                else if(type == NodeType.Binary)
-                {
-                    processedUrls.Add(uri);
-                    tasks.Add(Task.Run(async () =>
-                    {
-                        ProcessContent(item, null, await loader.LoadBytes(uri), link, uri);
-                    }));
+                        break;
+                    case NodeType.Text:
+                        ProcessContent(item, await loader.LoadString(uri), null, link, type, uri);
+                        break;
+                    case NodeType.Binary:
+                        ProcessContent(item, null, await loader.LoadBytes(uri), link, type, uri);
+                        break;
                 }
                 //NodeType.Mail just ignored, NodeType.Partial will be normalized and processed as html
             }
 
-            Task.WaitAll(tasks.ToArray());
             item.UpdateContent(node.OuterHtml);
         }
 
@@ -107,6 +90,7 @@ namespace Crawler.Logic
             Item parent,
             string stringContent, byte[] binaryContent,
             HtmlAttribute link,
+            NodeType? type,
             string uri)
         {
             var newItem = binaryContent == null
@@ -115,14 +99,16 @@ namespace Crawler.Logic
             parent.AddItem(newItem);
 
             //replace url with path in filesystem
-            var path = _mapper.GetPath(newItem.Uri);
-            if (UrlHelper.IsExternalLink(link.Value))
+            var path = _mapper.GetPath(newItem.Uri, type);
+            if (UrlHelper.IsExternalLink(link.Value) || type == NodeType.Html)
                 link.Value = $"{path}{UrlHelper.GetPartialUrl(uri)}";
 
             return newItem;
         }
 
-        private List<HtmlAttribute> PreprocessNodeAndGetLink(HtmlNode node)
+        private List<HtmlAttribute> PreprocessNodeAndGetLink(HtmlNode node,
+        Dictionary<string, Processing> processedUrls,
+        string root)
         {
             var links = new List<HtmlAttribute>();
 
@@ -131,7 +117,15 @@ namespace Crawler.Logic
             {
                 //find all links
                 if (Constant.LinkItems.Contains(element.Name))
+                {
                     links.Add(element);
+                    var uri = PrepareUri(element.Value, root);
+                    if (!processedUrls.ContainsKey(uri))
+                        processedUrls.Add(uri, new Processing
+                        {
+                            Owner = node
+                        });
+                }
 
                 //remove crossorigin for correct work in chrome
                 if (Constant.CrossOriginItems.Contains(element.Name))
@@ -159,6 +153,20 @@ namespace Crawler.Logic
             doc.LoadHtml(pageStr);
 
             return doc;
+        }
+
+        private string PrepareUri(string url, string root)
+        {
+            var uri = UrlHelper.IsExternalLink(url)
+                ? url
+                : UrlHelper.BuildRelativeUri(root, url);
+            return UrlHelper.NormalizeUrl(uri);
+        }
+
+        private class Processing
+        {
+            public HtmlNode Owner { get; set; }
+            public bool ContentIsProcessed { get; set; }
         }
     }
 }
