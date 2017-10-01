@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 
 namespace Crawler.Logic
@@ -8,27 +8,29 @@ namespace Crawler.Logic
     {
         private readonly string _outputDirectory;
         private const string Index = "index.html";
+        private const int MaxFileNameLength = 200;
 
         /// <summary>
         /// Contains map url from html (as a key) to path in file system
         /// </summary>
-        private readonly Dictionary<string, string> _map = new Dictionary<string, string>();
+        private readonly ConcurrentDictionary<string, string> _map = new ConcurrentDictionary<string, string>();
 
         public UrlMapper(Configuration cfg)
         {
             _outputDirectory = cfg.DestinationFolder;
         }
 
-        public virtual string GetPath(Item item)
+        public virtual string GetPath(string url)
         {
-            var normalizedUrl = UrlHelper.NormalizeUrl(item.Uri);
+            var normalizedUrl = UrlHelper.NormalizeUrl(url);
             if (_map.ContainsKey(normalizedUrl))
                 return _map[normalizedUrl];
 
             var uri = new Uri(normalizedUrl);
-            var fileName = Path.GetFileName(uri.LocalPath);
+            var fileName = GetFileName(uri);
             //subUrl it is a part of url between host name and last segment (if last segment is file name)
-            var subUrl = Path.GetDirectoryName(uri.LocalPath);
+            var subUrl = GetDirectoryName(uri);
+
             //if subUrl is empty, it won't inserted into link
             if (subUrl == null || subUrl == "\\")
                 subUrl = string.Empty;
@@ -38,36 +40,57 @@ namespace Crawler.Logic
             if (!_map.ContainsKey(hostUrl))
             {
                 var hostPath = $"{_outputDirectory}\\{uri.Host}\\{Index}";
-                _map.Add(hostUrl, hostPath);
+                _map.AddOrUpdate(hostUrl, _ => hostPath, (key, value) => value);
 
                 if (hostUrl == normalizedUrl)
                     return hostPath;
             }
 
             var hostDirectoryPath = Path.GetDirectoryName(_map[hostUrl]);
-            var filePath = $"{hostDirectoryPath}{subUrl}\\{GetFileNameOrDefault(fileName + uri.Query.Replace("?", "_p_"))}";
+            var filePath = $"{hostDirectoryPath}{subUrl}\\{GetFileNameOrDefault(fileName, uri.Query)}";
 
-            _map.Add(normalizedUrl, filePath);
+            _map.AddOrUpdate(normalizedUrl, _ => filePath, (key, value) => value);
             return filePath;
         }
 
-        public virtual string GetProcessedPathByUrl(string url)
+        private static string GetFileNameOrDefault(string fileName, string query)
         {
-            var normalizedUrl = UrlHelper.NormalizeUrl(url);
-            if (_map.ContainsKey(normalizedUrl))
-                return _map[normalizedUrl];
-            
-            throw new InvalidOperationException($"Path {url} not processed yet.");
-        }
-
-        private static string GetFileNameOrDefault(string fileName)
-        {
-            if (string.IsNullOrEmpty(fileName))
+            //incude query string manually for applying file system and browser
+            var normalizedQuery = query
+                .Replace("?", "_p_")
+                .Replace("%", "_pr_")
+                .Replace("&", "_am_");
+            if (normalizedQuery.Length > 100)
+                normalizedQuery = $"_p_{Guid.NewGuid()}";
+            if (string.IsNullOrEmpty(fileName) && string.IsNullOrEmpty(normalizedQuery))
                 return Index;
-            if (!Path.HasExtension(fileName))
-                return Path.ChangeExtension(fileName, ".html");
+            var extension = Path.GetExtension(fileName);
+            if (!string.IsNullOrWhiteSpace(normalizedQuery) || string.IsNullOrEmpty(extension))
+                extension = ".html";
+            //if query exists we save extension before query for file name
+            fileName =
+                $"{(string.IsNullOrWhiteSpace(normalizedQuery) ? Path.GetFileNameWithoutExtension(fileName) : Path.GetFileName(fileName))}" +
+                $"{normalizedQuery}{extension}";
 
             return fileName;
+        }
+
+        private static string GetFileName(Uri uri)
+        {
+            string fileName = uri.LocalPath.Length > MaxFileNameLength
+                ? $"{Guid.NewGuid().ToString()}{Path.GetExtension(uri.LocalPath)}"
+                : Path.GetFileName(uri.LocalPath);
+
+            return fileName;
+        }
+
+        private static string GetDirectoryName(Uri uri)
+        {
+            var directoryName = uri.LocalPath.Length > MaxFileNameLength
+                ? Guid.NewGuid().ToString()
+                : Path.GetDirectoryName(uri.LocalPath);
+
+            return directoryName;
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using HtmlAgilityPack;
 
 namespace Crawler.Logic
@@ -23,7 +24,7 @@ namespace Crawler.Logic
             var htmlDoc = await LoadDocument(loader, rootLink);
             if (htmlDoc == null) return null;
             var item = new Item(htmlDoc.DocumentNode.OuterHtml, rootLink);
-            _mapper.GetPath(item);
+            _mapper.GetPath(item.Uri);
             await Walk(item, htmlDoc.DocumentNode, loader, new HashSet<string> { rootLink }, rootLink,
                 _cfg.Depth);
 
@@ -36,6 +37,7 @@ namespace Crawler.Logic
                 return;
 
             var links = PreprocessNodeAndGetLink(node);
+            var tasks = new List<Task>();
 
             foreach (var link in links)
             {
@@ -56,35 +58,48 @@ namespace Crawler.Logic
                 //check already processed
                 if (processedUrls.Contains(uri))
                 {
-                    link.Value = $"{_mapper.GetProcessedPathByUrl(uri)}{partialPart}";
+                    link.Value = $"{_mapper.GetPath(uri)}{partialPart}";
                     continue;
                 }
-
+                
                 //walking
                 var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
                 if (type == NodeType.Html)
                 {
+                    processedUrls.Add(uri);
                     var doc = await LoadDocument(loader, uri);
                     if(doc == null)
                     {
-                        processedUrls.Add(uri);
                         continue; //if we can't parse document just skip link
                     }
-                    
-                    var newItem = ProcessContent(item, doc.DocumentNode.OuterHtml, null, link, processedUrls, uri);
-                    await Walk(newItem, doc.DocumentNode, loader, processedUrls, newRoot, depth - 1);
+
+                    tasks.Add(Task.Run(async () =>
+                    {
+                        var newItem = ProcessContent(item, doc.DocumentNode.OuterHtml, null, link, uri);
+                        await Walk(newItem, doc.DocumentNode, loader, processedUrls, newRoot, depth - 1);
+                    }
+                    ));
                 }
                 else if (type == NodeType.Text)
                 {
-                    ProcessContent(item, await loader.LoadString(uri), null, link, processedUrls, uri);
+                    processedUrls.Add(uri);
+                    tasks.Add(Task.Run(async () =>
+                    {
+                        ProcessContent(item, await loader.LoadString(uri), null, link, uri);
+                    }));
                 }
                 else if(type == NodeType.Binary)
                 {
-                    ProcessContent(item, null, await loader.LoadBytes(uri), link, processedUrls, uri);
+                    processedUrls.Add(uri);
+                    tasks.Add(Task.Run(async () =>
+                    {
+                        ProcessContent(item, null, await loader.LoadBytes(uri), link, uri);
+                    }));
                 }
                 //NodeType.Mail just ignored, NodeType.Partial will be normalized and processed as html
             }
 
+            Task.WaitAll(tasks.ToArray());
             item.UpdateContent(node.OuterHtml);
         }
 
@@ -92,7 +107,6 @@ namespace Crawler.Logic
             Item parent,
             string stringContent, byte[] binaryContent,
             HtmlAttribute link,
-            HashSet<string> processedUrls,
             string uri)
         {
             var newItem = binaryContent == null
@@ -100,10 +114,8 @@ namespace Crawler.Logic
                 : new Item(binaryContent, uri);
             parent.AddItem(newItem);
 
-            processedUrls.Add(uri);
-
             //replace url with path in filesystem
-            var path = _mapper.GetPath(newItem);
+            var path = _mapper.GetPath(newItem.Uri);
             if (UrlHelper.IsExternalLink(link.Value))
                 link.Value = $"{path}{UrlHelper.GetPartialUrl(uri)}";
 

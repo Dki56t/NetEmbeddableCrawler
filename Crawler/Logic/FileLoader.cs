@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -12,19 +13,23 @@ namespace Crawler.Logic
     {
         public virtual async Task<byte[]> LoadBytes(string url)
         {
-
             try
             {
-                return await Task.Run(() =>
-                {
-                    using (WebClient client = new WebClient())
-                        return client.DownloadData(url);
-                });
+                using (HttpClient client = new HttpClient())
+                    return await (await client.GetAsync(url)).Content.ReadAsByteArrayAsync();
+            }
+            catch (HttpRequestException ex)
+            {
+                if (AllowSkipException(ex.InnerException as WebException))
+                    return null;
+
+                throw;
             }
             catch (WebException ex)
             {
                 if (AllowSkipException(ex))
                     return null;
+
                 throw;
             }
         }
@@ -33,16 +38,21 @@ namespace Crawler.Logic
         {
             try
             {
-                return await Task.Run(() =>
-                {
-                    using (WebClient client = new WebClient())
-                        return client.DownloadString(url);
-                });
+                using (HttpClient client = new HttpClient())
+                    return await (await client.GetAsync(url)).Content.ReadAsStringAsync();
+            }
+            catch (HttpRequestException ex)
+            {
+                if (AllowSkipException(ex.InnerException as WebException))
+                    return null;
+
+                throw;
             }
             catch (WebException ex)
             {
                 if (AllowSkipException(ex))
                     return null;
+
                 throw;
             }
         }
