@@ -19,7 +19,8 @@ namespace Crawler
 
         public static HashSet<string> BinaryFileExtensions = new HashSet<string>
         {
-            ".jpeg"
+            ".jpeg",
+            ".zip"
         };
 
         public static HashSet<string> LinkItems = new HashSet<string>

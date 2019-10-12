@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Crawler.Logic
 {
     /// <summary>
-    ///     Represent an item (some element) of a web page
+    ///     Represent an item (some element) of a web page.
     /// </summary>
     internal class Item
     {

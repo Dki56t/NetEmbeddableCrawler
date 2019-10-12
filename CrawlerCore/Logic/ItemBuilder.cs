@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 
@@ -10,13 +9,11 @@ namespace Crawler.Logic
     internal class ItemBuilder
     {
         private readonly Configuration _cfg;
-        private readonly IUrlMapper _mapper;
         private readonly IFileLoader _loader;
+        private readonly IUrlMapper _mapper;
 
         public ItemBuilder(Configuration cfg, IUrlMapper mapper, IFileLoader loader)
         {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
             _cfg = cfg;
             _mapper = mapper;
             _loader = loader;
@@ -64,8 +61,10 @@ namespace Crawler.Logic
                 var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
                 if (UrlHelper.IsExternalLink(link.Value) || type == NodeType.Html)
                     link.Value = $"{_mapper.GetPath(uri, type)}{partialPart}";
+
                 if (processedUrls[uri].Owner != node || processedUrls[uri].ContentIsProcessed)
                     continue;
+
                 processedUrls[uri].ContentIsProcessed = true;
 
                 // Walking.
@@ -78,15 +77,15 @@ namespace Crawler.Logic
                         var parsingCanBeDone = doc != null;
                         if (!parsingCanBeDone) continue;
 
-                        var newItem = ProcessContent(item, doc.DocumentNode.OuterHtml, null, link, type, uri);
+                        var newItem = ProcessContent(item, doc.DocumentNode.OuterHtml, link, type, uri);
                         await Walk(newItem, doc.DocumentNode, loader, processedUrls, newRoot, depth - 1)
                             .ConfigureAwait(false);
                         break;
                     case NodeType.Text:
-                        ProcessContent(item, await loader.LoadString(uri).ConfigureAwait(false), null, link, type, uri);
+                        ProcessContent(item, await loader.LoadString(uri).ConfigureAwait(false), link, type, uri);
                         break;
                     case NodeType.Binary:
-                        ProcessContent(item, null, await loader.LoadBytes(uri).ConfigureAwait(false), link, type, uri);
+                        ProcessContent(item, await loader.LoadBytes(uri).ConfigureAwait(false), link, type, uri);
                         break;
                     case NodeType.Partial:
                         break;
@@ -100,16 +99,18 @@ namespace Crawler.Logic
             item.UpdateContent(node.OuterHtml);
         }
 
-        private Item ProcessContent(
-            Item parent,
-            string stringContent, byte[] binaryContent,
-            HtmlAttribute link,
-            NodeType? type,
-            string uri)
+        private Item ProcessContent(Item parent, string content, HtmlAttribute link, NodeType? type, string uri)
         {
-            var newItem = binaryContent == null
-                ? new Item(stringContent, uri)
-                : new Item(binaryContent, uri);
+            return ProcessContent(parent, new Item(content, uri), link, type, uri);
+        }
+
+        private void ProcessContent(Item parent, byte[] content, HtmlAttribute link, NodeType? type, string uri)
+        {
+            ProcessContent(parent, new Item(content, uri), link, type, uri);
+        }
+
+        private Item ProcessContent(Item parent, Item newItem, HtmlAttribute link, NodeType? type, string uri)
+        {
             parent.AddItem(newItem);
 
             // Replace url with path in file system.
@@ -121,13 +122,11 @@ namespace Crawler.Logic
         }
 
         private static IEnumerable<HtmlAttribute> PreprocessNodeAndGetLink(HtmlNode node,
-            IDictionary<string, Processing> processedUrls,
-            string root)
+            IDictionary<string, Processing> processedUrls, string root)
         {
             var links = new List<HtmlAttribute>();
 
-            foreach (var element in node.Descendants()
-                .SelectMany(x => x.Attributes).ToArray())
+            foreach (var element in node.Descendants().SelectMany(x => x.Attributes).ToArray())
             {
                 // Find all links.
                 if (Constant.LinkItems.Contains(element.Name))

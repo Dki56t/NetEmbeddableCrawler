@@ -19,14 +19,7 @@ namespace Crawler.Logic
                 return await (await client.GetAsync(url).ConfigureAwait(false)).Content.ReadAsByteArrayAsync()
                     .ConfigureAwait(false);
             }
-            catch (HttpRequestException ex)
-            {
-                if (AllowSkipException(ex.InnerException as WebException))
-                    return null;
-
-                throw;
-            }
-            catch (WebException ex)
+            catch (Exception ex)
             {
                 if (AllowSkipException(ex))
                     return null;
