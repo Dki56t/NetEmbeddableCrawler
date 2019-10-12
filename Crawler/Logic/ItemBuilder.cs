@@ -24,17 +24,22 @@ namespace Crawler.Logic
             if (htmlDoc == null) return null;
             var item = new Item(htmlDoc.DocumentNode.OuterHtml, rootLink);
             _mapper.GetPath(item.Uri, NodeType.Html);
-            await Walk(item, htmlDoc.DocumentNode, loader, new Dictionary<string, Processing> { {rootLink, new Processing
+            await Walk(item, htmlDoc.DocumentNode, loader, new Dictionary<string, Processing>
                 {
-                    Owner = htmlDoc.DocumentNode,
-                    ContentIsProcessed = true
-                }} }, rootLink,
-                _cfg.Depth);
+                    {
+                        rootLink, new Processing
+                        {
+                            Owner = htmlDoc.DocumentNode,
+                            ContentIsProcessed = true
+                        }
+                    }
+                }, rootLink, _cfg.Depth);
 
             return item;
         }
 
-        private async Task Walk(Item item, HtmlNode node, FileLoader loader, Dictionary<string, Processing> processedUrls, string root, int depth)
+        private async Task Walk(Item item, HtmlNode node, FileLoader loader,
+            Dictionary<string, Processing> processedUrls, string root, int depth)
         {
             if (depth == 0)
                 return;
@@ -48,10 +53,7 @@ namespace Crawler.Logic
                 var newRoot = UrlHelper.ExtractRoot(uri);
 
                 //check crawling is allow
-                if (!CrawlingIsAllowed(root, newRoot))
-                {
-                    continue;
-                }
+                if (!CrawlingIsAllowed(root, newRoot)) continue;
 
                 //check continue processing
                 var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
@@ -66,10 +68,7 @@ namespace Crawler.Logic
                 {
                     case NodeType.Html:
                         var doc = await LoadDocument(loader, uri);
-                        if (doc == null)
-                        {
-                            continue; //if we can't parse document just skip link
-                        }
+                        if (doc == null) continue; //if we can't parse document just skip link
                         var newItem = ProcessContent(item, doc.DocumentNode.OuterHtml, null, link, type, uri);
                         await Walk(newItem, doc.DocumentNode, loader, processedUrls, newRoot, depth - 1);
                         break;
@@ -80,6 +79,7 @@ namespace Crawler.Logic
                         ProcessContent(item, null, await loader.LoadBytes(uri), link, type, uri);
                         break;
                 }
+
                 //NodeType.Mail just ignored, NodeType.Partial will be normalized and processed as html
             }
 
@@ -107,8 +107,8 @@ namespace Crawler.Logic
         }
 
         private List<HtmlAttribute> PreprocessNodeAndGetLink(HtmlNode node,
-        Dictionary<string, Processing> processedUrls,
-        string root)
+            Dictionary<string, Processing> processedUrls,
+            string root)
         {
             var links = new List<HtmlAttribute>();
 
@@ -145,7 +145,7 @@ namespace Crawler.Logic
         //Load html document from url
         private async Task<HtmlDocument> LoadDocument(FileLoader loader, string url)
         {
-            string pageStr = await loader.LoadString(url);
+            var pageStr = await loader.LoadString(url);
             if (string.IsNullOrEmpty(pageStr))
                 return null;
 

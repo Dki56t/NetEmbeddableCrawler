@@ -27,7 +27,7 @@ namespace Test.Integration
         public void TestFileWrite()
         {
             //setup
-            var item1= new Item("1", "http://site1/index.html");
+            var item1 = new Item("1", "http://site1/index.html");
             var item11 = new Item("1/internal", "http://site1/internal/internal.html");
             item1.AddItem(item11);
             var item2 = new Item("2", "http://site2/index.html");
@@ -39,10 +39,14 @@ namespace Test.Integration
             {
                 DestinationFolder = _testDirectoryPath
             });
-            mapper.Setup(x => x.GetPath(item1.Uri, null)).Returns(Path.Combine(_testDirectoryPath, "site1\\index.html"));
-            mapper.Setup(x => x.GetPath(item11.Uri, null)).Returns(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html"));
-            mapper.Setup(x => x.GetPath(item2.Uri, null)).Returns(Path.Combine(_testDirectoryPath, "site2\\index.html"));
-            mapper.Setup(x => x.GetPath(item21.Uri, null)).Returns(Path.Combine(_testDirectoryPath, "site2\\otherinternal\\some.html"));
+            mapper.Setup(x => x.GetPath(item1.Uri, null))
+                .Returns(Path.Combine(_testDirectoryPath, "site1\\index.html"));
+            mapper.Setup(x => x.GetPath(item11.Uri, null))
+                .Returns(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html"));
+            mapper.Setup(x => x.GetPath(item2.Uri, null))
+                .Returns(Path.Combine(_testDirectoryPath, "site2\\index.html"));
+            mapper.Setup(x => x.GetPath(item21.Uri, null))
+                .Returns(Path.Combine(_testDirectoryPath, "site2\\otherinternal\\some.html"));
 
             //act
             ItemWriter.Write(item1, mapper.Object);
@@ -65,14 +69,8 @@ namespace Test.Integration
         private static void FillAllFileNames(DirectoryInfo di, List<string> fileNames)
         {
             fileNames.Add(di.FullName);
-            foreach (var fileInfo in di.EnumerateFiles())
-            {
-                fileNames.Add(fileInfo.FullName);
-            }
-            foreach (var directoryInfo in di.EnumerateDirectories())
-            {
-                FillAllFileNames(directoryInfo, fileNames);
-            }
+            foreach (var fileInfo in di.EnumerateFiles()) fileNames.Add(fileInfo.FullName);
+            foreach (var directoryInfo in di.EnumerateDirectories()) FillAllFileNames(directoryInfo, fileNames);
         }
     }
 }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Crawler.Logic
 {
     /// <summary>
-    /// Use it to download file from the web
+    ///     Use it to download file from the web
     /// </summary>
     internal class FileLoader
     {
@@ -15,8 +15,10 @@ namespace Crawler.Logic
         {
             try
             {
-                using (HttpClient client = new HttpClient())
+                using (var client = new HttpClient())
+                {
                     return await (await client.GetAsync(url)).Content.ReadAsByteArrayAsync();
+                }
             }
             catch (HttpRequestException ex)
             {
@@ -38,8 +40,10 @@ namespace Crawler.Logic
         {
             try
             {
-                using (HttpClient client = new HttpClient())
+                using (var client = new HttpClient())
+                {
                     return await (await client.GetAsync(url)).Content.ReadAsStringAsync();
+                }
             }
             catch (HttpRequestException ex)
             {
@@ -61,17 +65,13 @@ namespace Crawler.Logic
         {
             var webResp = exception.Response as HttpWebResponse;
             if (webResp != null && webResp.StatusCode == HttpStatusCode.Forbidden)
-            {
                 //access is forbidden
                 //we can log it and continue
                 return true;
-            }
             if (webResp != null && webResp.StatusCode == HttpStatusCode.NotFound)
-            {
                 //broken link
                 //we can log it and continue
                 return true;
-            }
             var ex = GetFirstException(exception);
             return ex is SocketException socketException
                    && (socketException.SocketErrorCode == SocketError.AccessDenied ||

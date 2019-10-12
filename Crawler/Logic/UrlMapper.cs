@@ -6,14 +6,15 @@ namespace Crawler.Logic
 {
     internal class UrlMapper
     {
-        private readonly string _outputDirectory;
         private const string Index = "index.html";
         private const int MaxFileNameLength = 200;
 
         /// <summary>
-        /// Contains map url from html (as a key) to path in file system
+        ///     Contains map url from html (as a key) to path in file system
         /// </summary>
         private readonly ConcurrentDictionary<string, string> _map = new ConcurrentDictionary<string, string>();
+
+        private readonly string _outputDirectory;
 
         public UrlMapper(Configuration cfg)
         {
@@ -66,7 +67,8 @@ namespace Crawler.Logic
             if (string.IsNullOrEmpty(fileName) && string.IsNullOrEmpty(normalizedQuery))
                 return Index;
             var extension = Path.GetExtension(fileName);
-            if (!string.IsNullOrWhiteSpace(normalizedQuery) || string.IsNullOrEmpty(extension) || nodeType == NodeType.Html)
+            if (!string.IsNullOrWhiteSpace(normalizedQuery) || string.IsNullOrEmpty(extension) ||
+                nodeType == NodeType.Html)
                 extension = ".html";
             //if query exists we save extension before query for file name
             fileName =
@@ -78,7 +80,7 @@ namespace Crawler.Logic
 
         private static string GetFileName(Uri uri)
         {
-            string fileName = uri.LocalPath.Length > MaxFileNameLength
+            var fileName = uri.LocalPath.Length > MaxFileNameLength
                 ? $"{Guid.NewGuid().ToString()}{Path.GetExtension(uri.LocalPath)}"
                 : Path.GetFileName(uri.LocalPath);
 

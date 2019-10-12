@@ -16,7 +16,8 @@ namespace Crawler.Logic
             Task.WaitAll(tasks.ToArray());
         }
 
-        private static void Write(Item item, UrlMapper mapper, List<Task> tasks, ConcurrentDictionary<string, byte> pathes)
+        private static void Write(Item item, UrlMapper mapper, List<Task> tasks,
+            ConcurrentDictionary<string, byte> pathes)
         {
             var path = mapper.GetPath(item.Uri);
             var directoryPath = Path.GetDirectoryName(path);
@@ -24,31 +25,27 @@ namespace Crawler.Logic
                 Directory.CreateDirectory(directoryPath ?? throw new InvalidOperationException($"Invalid path {path}"));
 
             if (item.ByteContent != null)
-            {
                 tasks.Add(Task.Run(async () =>
                 {
                     do
                     {
                         if (pathes.ContainsKey(path))
                             throw new InvalidOperationException("Duplicated pathes writes");
+                    } while (!pathes.TryAdd(path, 1));
 
-                    } while(!pathes.TryAdd(path, 1));
                     using (var stream = File.Create(path))
                     {
                         await stream.WriteAsync(item.ByteContent, 0, item.ByteContent.Length);
                         stream.Flush();
                     }
                 }));
-            }
             else
-            {
                 tasks.Add(Task.Run(async () =>
                 {
                     do
                     {
                         if (pathes.ContainsKey(path))
                             throw new InvalidOperationException("Duplicated pathes writes");
-
                     } while (!pathes.TryAdd(path, 1));
 
                     using (var writer = File.CreateText(path))
@@ -57,7 +54,6 @@ namespace Crawler.Logic
                         writer.Flush();
                     }
                 }));
-            }
 
             foreach (var i in item.GetSubItems())
                 Write(i, mapper, tasks, pathes);

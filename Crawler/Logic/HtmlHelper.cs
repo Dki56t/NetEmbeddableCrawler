@@ -15,7 +15,7 @@ namespace Crawler.Logic
             if (url.StartsWith("mailto"))
                 return NodeType.Mail;
 
-            bool validUri = Uri.TryCreate(url, UriKind.Absolute, out var uri);
+            var validUri = Uri.TryCreate(url, UriKind.Absolute, out var uri);
             var ext = validUri
                 ? Path.GetExtension(uri.Segments.Last())
                 : Path.GetExtension(url);

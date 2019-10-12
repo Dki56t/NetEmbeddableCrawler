@@ -12,8 +12,8 @@ namespace Test.Integration
         [TestMethod]
         public async Task TestCrawling()
         {
-            FileLoader loader = new FileLoader();
-            string testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
+            var loader = new FileLoader();
+            var testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
             var cfg = new Configuration
             {
                 RootLink = "http://html-agility-pack.net/",

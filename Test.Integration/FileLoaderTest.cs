@@ -10,7 +10,7 @@ namespace Test.Integration
         [TestMethod]
         public async Task TestSkipExceptions()
         {
-            FileLoader loader = new FileLoader();
+            var loader = new FileLoader();
             await loader.LoadString("https://ru.linkedin.com");
         }
     }

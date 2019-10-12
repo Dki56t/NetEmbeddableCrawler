@@ -5,19 +5,20 @@ using Crawler.Logic;
 
 namespace Crawler
 {
-    class Program
+    internal class Program
     {
-        static void Main()
+        private static void Main()
         {
-            FileLoader loader = new FileLoader();
+            var loader = new FileLoader();
             var tmpPath = Path.GetTempPath();
             tmpPath = tmpPath.Remove(tmpPath.LastIndexOf(Path.DirectorySeparatorChar));
-            
+
             var cfg = new Configuration
             {
                 RootLink = ConfigurationManager.AppSettings["RootLink"],
                 Depth = Convert.ToInt16(ConfigurationManager.AppSettings["Depth"]),
-                DestinationFolder = ConfigurationManager.AppSettings["DestinationFolder"].Replace("${TempPath}", tmpPath),
+                DestinationFolder = ConfigurationManager.AppSettings["DestinationFolder"]
+                    .Replace("${TempPath}", tmpPath),
                 FullTraversal = Convert.ToBoolean(ConfigurationManager.AppSettings["FullTraversal"])
             };
 

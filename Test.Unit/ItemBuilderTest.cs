@@ -28,7 +28,8 @@ namespace Test.Unit
         {
             var mapper = new Mock<UrlMapper>(_cfg).Object;
             var loader = new Mock<FileLoader>();
-            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult("<body><a href=\"http://site1.com/sub-page\"> </a></body>"));
+            loader.Setup(x => x.LoadString("http://site1.com"))
+                .Returns(Task.FromResult("<body><a href=\"http://site1.com/sub-page\"> </a></body>"));
             loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns(Task.FromResult("<body></body>"));
 
             var builder = new ItemBuilder(_cfg, mapper);
@@ -45,13 +46,13 @@ namespace Test.Unit
             var mapper = new Mock<UrlMapper>(_cfg).Object;
             var loader = new Mock<FileLoader>();
             loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult("<body>" +
-                                                                        "<a href=\"http://site1.com/sub-page\"> </a>" +
-                                                                        "<a href=\"http://site1.com/sub-page\"> </a>" +
-                                                                        "<a href=\"http://site1.com/sub-page\"> </a></body>"));
+                                                                                        "<a href=\"http://site1.com/sub-page\"> </a>" +
+                                                                                        "<a href=\"http://site1.com/sub-page\"> </a>" +
+                                                                                        "<a href=\"http://site1.com/sub-page\"> </a></body>"));
             loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns(Task.FromResult("<body>" +
-                                                                                 "<a href=\"http://site1.com/sub-page\"> </a>" +
-                                                                                 "<a href=\"http://site1.com/\"> </a>" +
-                                                                                 "</body>"));
+                                                                                                 "<a href=\"http://site1.com/sub-page\"> </a>" +
+                                                                                                 "<a href=\"http://site1.com/\"> </a>" +
+                                                                                                 "</body>"));
 
             var builder = new ItemBuilder(_cfg, mapper);
             var item = builder.Build(loader.Object).Result;
@@ -68,7 +69,8 @@ namespace Test.Unit
         {
             var mapper = new Mock<UrlMapper>(_cfg);
             var loader = new Mock<FileLoader>();
-            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult("<body><a href=\"css/style.css\"> </a></body>"));
+            loader.Setup(x => x.LoadString("http://site1.com"))
+                .Returns(Task.FromResult("<body><a href=\"css/style.css\"> </a></body>"));
             loader.Setup(x => x.LoadString("http://site1.com/css/style.css")).Returns(Task.FromResult(""));
             mapper.Setup(x => x.GetPath("css/style.css", NodeType.Text))
                 .Returns("directory/css/style.css");
@@ -84,7 +86,8 @@ namespace Test.Unit
         {
             var mapper = new Mock<UrlMapper>(_cfg);
             var loader = new Mock<FileLoader>();
-            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult("<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\" integrity=\"sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M\" crossorigin=\"anonymous\"></body>"));
+            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult(
+                "<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\" integrity=\"sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M\" crossorigin=\"anonymous\"></body>"));
 
             var builder = new ItemBuilder(_cfg, mapper.Object);
             var item = builder.Build(loader.Object).Result;

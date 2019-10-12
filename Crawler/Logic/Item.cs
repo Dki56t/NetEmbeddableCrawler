@@ -1,20 +1,15 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Crawler.Logic
 {
     /// <summary>
-    /// Represent an item (some element) of a web page
+    ///     Represent an item (some element) of a web page
     /// </summary>
     internal class Item
     {
         private Item _parent;
-        private ConcurrentBag<Item> Items { get; }
-        public byte[] ByteContent { get; }
-        public string Content { get; private set; }
-        public string Uri { get; }
 
         public Item(string content, string uri)
         {
@@ -30,9 +25,14 @@ namespace Crawler.Logic
             Items = new ConcurrentBag<Item>();
         }
 
+        private ConcurrentBag<Item> Items { get; }
+        public byte[] ByteContent { get; }
+        public string Content { get; private set; }
+        public string Uri { get; }
+
         public void AddItem(Item item)
         {
-            if(item._parent != null)
+            if (item._parent != null)
                 throw new InvalidOperationException("Item can't have more than one parent");
 
             item._parent = this;
