@@ -2,18 +2,14 @@
 using System.Threading.Tasks;
 using Crawler;
 using Crawler.Logic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Xunit;
 
-namespace Test.Unit
+namespace Tests.UnitTests
 {
-    
     public class ItemBuilderTest
     {
-        private Configuration _cfg;
-
-        [TestInitialize]
-        public void Init()
+        public ItemBuilderTest()
         {
             _cfg = new Configuration
             {
@@ -23,11 +19,13 @@ namespace Test.Unit
             };
         }
 
+        private readonly Configuration _cfg;
+
         [Fact]
         public void TestItemTreeBuilding()
         {
-            var mapper = new Mock<UrlMapper>(_cfg).Object;
-            var loader = new Mock<FileLoader>();
+            var mapper = new Mock<IUrlMapper>().Object;
+            var loader = new Mock<IFileLoader>();
             loader.Setup(x => x.LoadString("http://site1.com"))
                 .Returns(Task.FromResult("<body><a href=\"http://site1.com/sub-page\"> </a></body>"));
             loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns(Task.FromResult("<body></body>"));
@@ -35,16 +33,16 @@ namespace Test.Unit
             var builder = new ItemBuilder(_cfg, mapper);
             var item = builder.Build(loader.Object).Result;
 
-            Assert.AreEqual(item.Uri, "http://site1.com");
-            Assert.AreEqual(item.GetSubItems().Count, 1);
-            Assert.AreEqual(item.GetSubItems().Single().Uri, "http://site1.com/sub-page");
+            Assert.Equal(item.Uri, "http://site1.com");
+            Assert.Equal(item.GetSubItems().Count, 1);
+            Assert.Equal(item.GetSubItems().Single().Uri, "http://site1.com/sub-page");
         }
 
         [Fact]
         public void TestLoadingHappensOnlyOnce()
         {
-            var mapper = new Mock<UrlMapper>(_cfg).Object;
-            var loader = new Mock<FileLoader>();
+            var mapper = new Mock<IUrlMapper>().Object;
+            var loader = new Mock<IFileLoader>();
             loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult("<body>" +
                                                                                         "<a href=\"http://site1.com/sub-page\"> </a>" +
                                                                                         "<a href=\"http://site1.com/sub-page\"> </a>" +
@@ -57,18 +55,32 @@ namespace Test.Unit
             var builder = new ItemBuilder(_cfg, mapper);
             var item = builder.Build(loader.Object).Result;
 
-            Assert.AreEqual(item.Uri, "http://site1.com");
-            Assert.AreEqual(item.GetSubItems().Count, 1);
-            Assert.AreEqual(item.GetSubItems().Single().Uri, "http://site1.com/sub-page");
+            Assert.Equal(item.Uri, "http://site1.com");
+            Assert.Equal(item.GetSubItems().Count, 1);
+            Assert.Equal(item.GetSubItems().Single().Uri, "http://site1.com/sub-page");
             loader.Verify(x => x.LoadString("http://site1.com/sub-page"), Times.Once);
             loader.Verify(x => x.LoadString("http://site1.com"), Times.Once);
         }
 
         [Fact]
+        public void TestRemoveCrossOriginUri()
+        {
+            var mapper = new Mock<IUrlMapper>();
+            var loader = new Mock<IFileLoader>();
+            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult(
+                "<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\" integrity=\"sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M\" crossorigin=\"anonymous\"></body>"));
+
+            var builder = new ItemBuilder(_cfg, mapper.Object);
+            var item = builder.Build(loader.Object).Result;
+
+            Assert.Equal(item.Content, "<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\"></body>");
+        }
+
+        [Fact]
         public void TestStylesKeepsAsLocalUri()
         {
-            var mapper = new Mock<UrlMapper>(_cfg);
-            var loader = new Mock<FileLoader>();
+            var mapper = new Mock<IUrlMapper>();
+            var loader = new Mock<IFileLoader>();
             loader.Setup(x => x.LoadString("http://site1.com"))
                 .Returns(Task.FromResult("<body><a href=\"css/style.css\"> </a></body>"));
             loader.Setup(x => x.LoadString("http://site1.com/css/style.css")).Returns(Task.FromResult(""));
@@ -78,21 +90,7 @@ namespace Test.Unit
             var builder = new ItemBuilder(_cfg, mapper.Object);
             var item = builder.Build(loader.Object).Result;
 
-            Assert.AreEqual(item.Content, "<body><a href=\"css/style.css\"> </a></body>");
-        }
-
-        [Fact]
-        public void TestRemoveCrossOriginUri()
-        {
-            var mapper = new Mock<UrlMapper>(_cfg);
-            var loader = new Mock<FileLoader>();
-            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult(
-                "<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\" integrity=\"sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M\" crossorigin=\"anonymous\"></body>"));
-
-            var builder = new ItemBuilder(_cfg, mapper.Object);
-            var item = builder.Build(loader.Object).Result;
-
-            Assert.AreEqual(item.Content, "<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\"></body>");
+            Assert.Equal(item.Content, "<body><a href=\"css/style.css\"> </a></body>");
         }
     }
 }

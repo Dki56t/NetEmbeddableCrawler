@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="README.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="README.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="htmlagilitypack" Version="1.11.16" />
+  </ItemGroup>
+
+</Project>

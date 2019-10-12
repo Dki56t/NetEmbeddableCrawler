@@ -4,10 +4,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Test.Unit
 {
-    [TestClass]
+    
     public class ItemTest
     {
-        [TestMethod]
+        [Fact]
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestParentOnlyOne()
         {
@@ -19,7 +19,7 @@ namespace Test.Unit
             parent2.AddItem(child);
         }
 
-        [TestMethod]
+        [Fact]
         public void TestGetRoot()
         {
             var parent1 = new Item("", "");

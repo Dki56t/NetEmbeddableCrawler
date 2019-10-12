@@ -1,19 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using Crawler;
 using Crawler.Logic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Xunit;
 
-namespace Test.Integration
+namespace Tests.IntegrationTests
 {
-    
     public class ItemWriterTest
     {
-        private string _testDirectoryPath;
-
-        [TestInitialize]
-        public void Init()
+        public ItemWriterTest()
         {
             _testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
             var di = new DirectoryInfo(_testDirectoryPath);
@@ -21,6 +16,15 @@ namespace Test.Integration
                 di.Delete(true);
             else
                 di.Create();
+        }
+
+        private readonly string _testDirectoryPath;
+
+        private static void FillAllFileNames(DirectoryInfo di, List<string> fileNames)
+        {
+            fileNames.Add(di.FullName);
+            foreach (var fileInfo in di.EnumerateFiles()) fileNames.Add(fileInfo.FullName);
+            foreach (var directoryInfo in di.EnumerateDirectories()) FillAllFileNames(directoryInfo, fileNames);
         }
 
         [Fact]
@@ -35,10 +39,7 @@ namespace Test.Integration
             item2.AddItem(item21);
             item1.AddItem(item2);
 
-            var mapper = new Mock<UrlMapper>(new Configuration
-            {
-                DestinationFolder = _testDirectoryPath
-            });
+            var mapper = new Mock<IUrlMapper>();
             mapper.Setup(x => x.GetPath(item1.Uri, null))
                 .Returns(Path.Combine(_testDirectoryPath, "site1\\index.html"));
             mapper.Setup(x => x.GetPath(item11.Uri, null))
@@ -54,23 +55,16 @@ namespace Test.Integration
             FillAllFileNames(new DirectoryInfo(_testDirectoryPath), fileNames);
 
             //verify
-            Assert.AreEqual(fileNames.Count, 9);
-            Assert.IsTrue(fileNames.Contains(_testDirectoryPath));
-            Assert.IsTrue(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1")));
-            Assert.IsTrue(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1\\index.html")));
-            Assert.IsTrue(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1\\internal")));
-            Assert.IsTrue(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html")));
-            Assert.IsTrue(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2")));
-            Assert.IsTrue(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2\\index.html")));
-            Assert.IsTrue(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2\\otherinternal")));
-            Assert.IsTrue(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2\\otherinternal\\some.html")));
-        }
-
-        private static void FillAllFileNames(DirectoryInfo di, List<string> fileNames)
-        {
-            fileNames.Add(di.FullName);
-            foreach (var fileInfo in di.EnumerateFiles()) fileNames.Add(fileInfo.FullName);
-            foreach (var directoryInfo in di.EnumerateDirectories()) FillAllFileNames(directoryInfo, fileNames);
+            Assert.Equal(fileNames.Count, 9);
+            Assert.True(fileNames.Contains(_testDirectoryPath));
+            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1")));
+            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1\\index.html")));
+            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1\\internal")));
+            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html")));
+            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2")));
+            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2\\index.html")));
+            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2\\otherinternal")));
+            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2\\otherinternal\\some.html")));
         }
     }
 }

@@ -2,11 +2,10 @@
 using System.Threading.Tasks;
 using Crawler;
 using Crawler.Logic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
-namespace Test.Integration
+namespace Tests.IntegrationTests
 {
-    
     public class ItemBuilderTest
     {
         [Fact]
@@ -16,8 +15,8 @@ namespace Test.Integration
             var testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
             var cfg = new Configuration
             {
-                RootLink = "http://html-agility-pack.net/",
-                Depth = 3,
+                RootLink = "http://google.com/",
+                Depth = 1,
                 DestinationFolder = testDirectoryPath,
                 FullTraversal = false
             };

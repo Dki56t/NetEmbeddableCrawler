@@ -1,10 +1,9 @@
 ﻿using System.Threading.Tasks;
 using Crawler.Logic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
-namespace Test.Integration
+namespace Tests.IntegrationTests
 {
-    
     public class FileLoaderTest
     {
         [Fact]

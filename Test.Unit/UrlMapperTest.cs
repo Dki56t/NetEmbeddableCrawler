@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Test.Unit
 {
-    [TestClass]
+    
     public class UrlMapperTest
     {
         private string _testDirectoryPath;
@@ -17,7 +17,7 @@ namespace Test.Unit
             _testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
         }
 
-        [TestMethod]
+        [Fact]
         public void TestMapping()
         {
             var mapper = new UrlMapper(new Configuration
@@ -38,7 +38,7 @@ namespace Test.Unit
                 Path.Combine(_testDirectoryPath, "site2\\otherinternal\\some.html"));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestMappingPartial()
         {
             var mapper = new UrlMapper(new Configuration
@@ -51,7 +51,7 @@ namespace Test.Unit
                 Path.Combine(_testDirectoryPath, "site4\\test\\some.html"));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestMappingAbnormal()
         {
             var mapper = new UrlMapper(new Configuration
@@ -64,7 +64,7 @@ namespace Test.Unit
                 Path.Combine(_testDirectoryPath, "site3\\test\\some.html"));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestFileNameAppendExtension()
         {
             var mapper = new UrlMapper(new Configuration
@@ -81,7 +81,7 @@ namespace Test.Unit
                 Path.Combine(_testDirectoryPath, "site1\\test\\1.5.5.html"));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestUrlWithParameters()
         {
             var mapper = new UrlMapper(new Configuration
@@ -120,7 +120,7 @@ namespace Test.Unit
                 Path.Combine(_testDirectoryPath, "site1.net\\_p__am__pr_25.html"));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestHostNameRecognition()
         {
             var item1 = new Item("1", "http://site1/test/some");
@@ -136,7 +136,7 @@ namespace Test.Unit
             Assert.AreEqual(mapper.GetPath("http://site1/"), Path.Combine(_testDirectoryPath, "site1\\index.html"));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestLongFileNamePath()
         {
             var longUrl = "http://site1/test/some/123456789012345678901234567890123456789012345678901234567890" +
@@ -157,7 +157,7 @@ namespace Test.Unit
                 _testDirectoryPath.Length + "site1".Length + 2 * ("\\" + Guid.Empty).Length + ".jpeg".Length);
         }
 
-        [TestMethod]
+        [Fact]
         public void TestLongDirectoryNamePath()
         {
             var longUrl = "http://site1/test/some/123456789012345678901234567890123456789012345678901234567890" +
@@ -176,7 +176,7 @@ namespace Test.Unit
                 _testDirectoryPath.Length + "site1".Length + 2 * ("\\" + Guid.Empty).Length + ".jpeg".Length);
         }
 
-        [TestMethod]
+        [Fact]
         public void TestLongQueryPath()
         {
             var longUrl = "http://site1/test/some/?123456789012345678901234567890123456789012345678901234567890" +

@@ -3,10 +3,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Test.Unit
 {
-    [TestClass]
+    
     public class UrlHelperTest
     {
-        [TestMethod]
+        [Fact]
         public void TestIsExternalLink()
         {
             Assert.IsTrue(UrlHelper.IsExternalLink("http://site.com"));
@@ -14,7 +14,7 @@ namespace Test.Unit
             Assert.IsTrue(UrlHelper.IsExternalLink("//site.com"));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestNormalizeUrl()
         {
             Assert.AreEqual(UrlHelper.NormalizeUrl("http://site.com"), "http://site.com");
@@ -24,7 +24,7 @@ namespace Test.Unit
             Assert.AreEqual(UrlHelper.NormalizeUrl("https://site.com/"), "https://site.com");
         }
 
-        [TestMethod]
+        [Fact]
         public void TestGetPartialUrl()
         {
             Assert.AreEqual(UrlHelper.GetPartialUrl("http://site.com"), string.Empty);
@@ -33,7 +33,7 @@ namespace Test.Unit
             Assert.AreEqual(UrlHelper.GetPartialUrl("http://site.com/test#part"), "#part");
         }
 
-        [TestMethod]
+        [Fact]
         public void TestExtractRoot()
         {
             Assert.AreEqual(UrlHelper.ExtractRoot("http://site.com"), "http://site.com");
@@ -41,7 +41,7 @@ namespace Test.Unit
             Assert.AreEqual(UrlHelper.ExtractRoot("http://site.com/sub-page/sub-sub-page"), "http://site.com");
         }
 
-        [TestMethod]
+        [Fact]
         public void TestBuildRelativeUri()
         {
             Assert.AreEqual(UrlHelper.BuildRelativeUri("http://site.com", "sub-page"), "http://site.com/sub-page");

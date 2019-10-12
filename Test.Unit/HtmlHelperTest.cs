@@ -3,10 +3,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Test.Unit
 {
-    [TestClass]
+    
     public class HtmlHelperTest
     {
-        [TestMethod]
+        [Fact]
         public void TestNodeTypeResolveHtml()
         {
             var url = "https://subdomain.domain.com";
@@ -18,7 +18,7 @@ namespace Test.Unit
             Assert.AreEqual(HtmlHelper.ResolveType("a", urlNumbers), NodeType.Html);
         }
 
-        [TestMethod]
+        [Fact]
         public void TestNodeTypeResolvePartial()
         {
             var urlSubPartial = "#23";
@@ -26,7 +26,7 @@ namespace Test.Unit
             Assert.AreEqual(HtmlHelper.ResolveType("a", urlSubPartial), NodeType.Partial);
         }
 
-        [TestMethod]
+        [Fact]
         public void TestNodeTypeResolveBinary()
         {
             var url = "https://subdomain.domain.com";
@@ -36,7 +36,7 @@ namespace Test.Unit
             Assert.AreEqual(HtmlHelper.ResolveType("img", url), NodeType.Binary);
         }
 
-        [TestMethod]
+        [Fact]
         public void TestNodeTypeResolveText()
         {
             var urlText = "https://subdomain.domain.com/text.txt";
