@@ -27,11 +27,13 @@ namespace Tests.UnitTests
             var mapper = new Mock<IUrlMapper>().Object;
             var loader = new Mock<IFileLoader>();
             loader.Setup(x => x.LoadString("http://site1.com"))
-                .Returns(Task.FromResult("<body><a href=\"http://site1.com/sub-page\"> </a></body>"));
-            loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns(Task.FromResult("<body></body>"));
+                .ReturnsAsync("<body><a href=\"http://site1.com/sub-page\"> </a></body>");
+            loader.Setup(x => x.LoadString("http://site1.com/sub-page"))
+                .ReturnsAsync("<body></body>");
 
-            var builder = new ItemBuilder(_cfg, mapper);
-            var item = await builder.Build(loader.Object);
+            var builder = new ItemBuilder(_cfg, mapper, loader.Object);
+
+            var item = await builder.Build().ConfigureAwait(false);
 
             Assert.Equal("http://site1.com", item.Uri);
             Assert.Equal(1, item.GetSubItems().Count);
@@ -43,17 +45,20 @@ namespace Tests.UnitTests
         {
             var mapper = new Mock<IUrlMapper>().Object;
             var loader = new Mock<IFileLoader>();
-            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult("<body>" +
-                                                                                        "<a href=\"http://site1.com/sub-page\"> </a>" +
-                                                                                        "<a href=\"http://site1.com/sub-page\"> </a>" +
-                                                                                        "<a href=\"http://site1.com/sub-page\"> </a></body>"));
-            loader.Setup(x => x.LoadString("http://site1.com/sub-page")).Returns(Task.FromResult("<body>" +
-                                                                                                 "<a href=\"http://site1.com/sub-page\"> </a>" +
-                                                                                                 "<a href=\"http://site1.com/\"> </a>" +
-                                                                                                 "</body>"));
+            loader.Setup(x => x.LoadString("http://site1.com"))
+                .ReturnsAsync("<body>" +
+                              "<a href=\"http://site1.com/sub-page\"> </a>" +
+                              "<a href=\"http://site1.com/sub-page\"> </a>" +
+                              "<a href=\"http://site1.com/sub-page\"> </a></body>");
+            loader.Setup(x => x.LoadString("http://site1.com/sub-page"))
+                .ReturnsAsync("<body>" +
+                              "<a href=\"http://site1.com/sub-page\"> </a>" +
+                              "<a href=\"http://site1.com/\"> </a>" +
+                              "</body>");
 
-            var builder = new ItemBuilder(_cfg, mapper);
-            var item = await builder.Build(loader.Object);
+            var builder = new ItemBuilder(_cfg, mapper, loader.Object);
+
+            var item = await builder.Build().ConfigureAwait(false);
 
             Assert.Equal("http://site1.com", item.Uri);
             Assert.Equal(1, item.GetSubItems().Count);
@@ -67,11 +72,15 @@ namespace Tests.UnitTests
         {
             var mapper = new Mock<IUrlMapper>();
             var loader = new Mock<IFileLoader>();
-            loader.Setup(x => x.LoadString("http://site1.com")).Returns(Task.FromResult(
-                "<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\" integrity=\"sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M\" crossorigin=\"anonymous\"></body>"));
+            loader.Setup(x => x.LoadString("http://site1.com")).ReturnsAsync(
+                // ReSharper disable once StringLiteralTypo - an example of hash in a html element.
+                "<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\" " +
+                "integrity=\"sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M\" " +
+                "crossorigin=\"anonymous\"></body>");
 
-            var builder = new ItemBuilder(_cfg, mapper.Object);
-            var item = await builder.Build(loader.Object);
+            var builder = new ItemBuilder(_cfg, mapper.Object, loader.Object);
+
+            var item = await builder.Build().ConfigureAwait(false);
 
             Assert.Equal("<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\"></body>", item.Content);
         }
@@ -82,13 +91,15 @@ namespace Tests.UnitTests
             var mapper = new Mock<IUrlMapper>();
             var loader = new Mock<IFileLoader>();
             loader.Setup(x => x.LoadString("http://site1.com"))
-                .Returns(Task.FromResult("<body><a href=\"css/style.css\"> </a></body>"));
-            loader.Setup(x => x.LoadString("http://site1.com/css/style.css")).Returns(Task.FromResult(""));
+                .ReturnsAsync("<body><a href=\"css/style.css\"> </a></body>");
+            loader.Setup(x => x.LoadString("http://site1.com/css/style.css"))
+                .ReturnsAsync("");
             mapper.Setup(x => x.GetPath("css/style.css", NodeType.Text))
                 .Returns("directory/css/style.css");
 
-            var builder = new ItemBuilder(_cfg, mapper.Object);
-            var item = await builder.Build(loader.Object);
+            var builder = new ItemBuilder(_cfg, mapper.Object, loader.Object);
+
+            var item = await builder.Build().ConfigureAwait(false);
 
             Assert.Equal("<body><a href=\"css/style.css\"> </a></body>", item.Content);
         }

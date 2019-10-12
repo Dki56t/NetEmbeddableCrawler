@@ -10,7 +10,7 @@ namespace Crawler.Logic
         private const int MaxFileNameLength = 200;
 
         /// <summary>
-        ///     Contains map url from html (as a key) to path in file system
+        ///     Contains map url from html (as a key) to path in file system.
         /// </summary>
         private readonly ConcurrentDictionary<string, string> _map = new ConcurrentDictionary<string, string>();
 
@@ -29,14 +29,13 @@ namespace Crawler.Logic
 
             var uri = new Uri(normalizedUrl);
             var fileName = GetFileName(uri);
-            //subUrl it is a part of url between host name and last segment (if last segment is file name)
+            // SubUrl it is a part of url between host name and last segment (if last segment is file name).
             var subUrl = GetDirectoryName(uri);
 
-            //if subUrl is empty, it won't inserted into link
+            // If subUrl is empty, it won't insert into link.
             if (subUrl == null || subUrl == "\\")
                 subUrl = string.Empty;
 
-            //we need path to host directory for all links
             var hostUrl = UrlHelper.ExtractRoot(normalizedUrl);
             if (!_map.ContainsKey(hostUrl))
             {
@@ -56,7 +55,7 @@ namespace Crawler.Logic
 
         private static string GetFileNameOrDefault(string fileName, string query, NodeType? nodeType)
         {
-            //include query string manually for applying file system and browser
+            // Include query string manually to be valid for file system and browser.
             var normalizedQuery = query
                 .Replace("?", "_p_")
                 .Replace("%", "_pr_")
@@ -70,7 +69,7 @@ namespace Crawler.Logic
             if (!string.IsNullOrWhiteSpace(normalizedQuery) || string.IsNullOrEmpty(extension) ||
                 nodeType == NodeType.Html)
                 extension = ".html";
-            //if query exists we save extension before query for file name
+            // If query exists we save extension before query for file name.
             fileName =
                 $"{(string.IsNullOrWhiteSpace(normalizedQuery) && nodeType != NodeType.Html ? Path.GetFileNameWithoutExtension(fileName) : Path.GetFileName(fileName))}" +
                 $"{normalizedQuery}{extension}";

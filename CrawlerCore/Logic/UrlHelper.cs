@@ -31,9 +31,7 @@ namespace Crawler.Logic
             if (index > -1)
                 return url.Substring(index);
             index = url.LastIndexOf("#", StringComparison.Ordinal);
-            if (index > -1)
-                return url.Substring(index);
-            return string.Empty;
+            return index > -1 ? url.Substring(index) : string.Empty;
         }
 
         public static string ExtractRoot(string url)

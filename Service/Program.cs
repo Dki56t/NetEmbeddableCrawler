@@ -5,7 +5,7 @@ namespace Service
 {
     internal class Program
     {
-        private static async Task Main(string[] args)
+        private static async Task Main()
         {
             await CrawlHandler.Process(new Configuration
             {
@@ -13,7 +13,7 @@ namespace Service
                 Depth = 2,
                 DestinationFolder = "${TempPath}\\TestFileWrite",
                 FullTraversal = true
-            });
+            }).ConfigureAwait(false);
         }
     }
 }

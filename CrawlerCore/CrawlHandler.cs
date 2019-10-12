@@ -17,10 +17,10 @@ namespace Crawler
 
             var loader = new FileLoader();
             var mapper = new UrlMapper(configuration);
-            var builder = new ItemBuilder(configuration, mapper);
-            var root = await builder.Build(loader);
+            var builder = new ItemBuilder(configuration, mapper, loader);
+            var root = await builder.Build().ConfigureAwait(false);
 
-            await ItemWriter.Write(root, mapper);
+            await ItemWriter.Write(root, mapper).ConfigureAwait(false);
         }
     }
 }

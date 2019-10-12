@@ -15,10 +15,9 @@ namespace Crawler.Logic
         {
             try
             {
-                using (var client = new HttpClient())
-                {
-                    return await (await client.GetAsync(url)).Content.ReadAsByteArrayAsync();
-                }
+                using var client = new HttpClient();
+                return await (await client.GetAsync(url).ConfigureAwait(false)).Content.ReadAsByteArrayAsync()
+                    .ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
             {
@@ -40,10 +39,9 @@ namespace Crawler.Logic
         {
             try
             {
-                using (var client = new HttpClient())
-                {
-                    return await (await client.GetAsync(url)).Content.ReadAsStringAsync();
-                }
+                using var client = new HttpClient();
+                return await (await client.GetAsync(url).ConfigureAwait(false)).Content.ReadAsStringAsync()
+                    .ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -61,8 +59,8 @@ namespace Crawler.Logic
             return AllowSkipWebException(webException) ||
                    rootException is SocketException socketException
                    && (socketException.SocketErrorCode == SocketError.AccessDenied ||
-                       socketException.SocketErrorCode == SocketError.TimedOut || //www.linkedin.com
-                       socketException.SocketErrorCode == SocketError.ConnectionReset); //www.ru.linkedin.com
+                       socketException.SocketErrorCode == SocketError.TimedOut || // www.linkedin.com
+                       socketException.SocketErrorCode == SocketError.ConnectionReset); // www.ru.linkedin.com
         }
 
         private static bool AllowSkipWebException(WebException webException)
@@ -72,15 +70,10 @@ namespace Crawler.Logic
 
             var webResp = webException.Response as HttpWebResponse;
             if (webResp != null && webResp.StatusCode == HttpStatusCode.Forbidden)
-                //access is forbidden
-                //we can log it and continue
-                return true;
-            if (webResp != null && webResp.StatusCode == HttpStatusCode.NotFound)
-                //broken link
-                //we can log it and continue
+                // Access is forbidden.
                 return true;
 
-            return false;
+            return webResp != null && webResp.StatusCode == HttpStatusCode.NotFound;
         }
 
         private static (Exception rootException, WebException webException) GetRootAndWebException(Exception ex)

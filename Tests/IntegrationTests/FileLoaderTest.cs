@@ -10,7 +10,7 @@ namespace Tests.IntegrationTests
         public async Task TestSkipExceptions()
         {
             var loader = new FileLoader();
-            await loader.LoadString("https://ru.linkedin.com");
+            await loader.LoadString("https://ru.linkedin.com").ConfigureAwait(false);
         }
     }
 }

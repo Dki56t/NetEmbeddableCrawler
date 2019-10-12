@@ -8,8 +8,8 @@ namespace Tests.UnitTests
         [Fact]
         public void TestNodeTypeResolveBinary()
         {
-            var url = "https://subdomain.domain.com";
-            var urlJpeg = "https://subdomain.domain.com/picture.jpeg";
+            const string url = "https://subdomain.domain.com";
+            const string urlJpeg = "https://subdomain.domain.com/picture.jpeg";
 
             Assert.Equal(NodeType.Binary, HtmlHelper.ResolveType("a", urlJpeg));
             Assert.Equal(NodeType.Binary, HtmlHelper.ResolveType("img", url));
@@ -18,9 +18,9 @@ namespace Tests.UnitTests
         [Fact]
         public void TestNodeTypeResolveHtml()
         {
-            var url = "https://subdomain.domain.com";
-            var urlPartial = "https://subdomain.domain.com/#23";
-            var urlNumbers = "https://subdomain.domain.com/1.2.5";
+            const string url = "https://subdomain.domain.com";
+            const string urlPartial = "https://subdomain.domain.com/#23";
+            const string urlNumbers = "https://subdomain.domain.com/1.2.5";
 
             Assert.Equal(NodeType.Html, HtmlHelper.ResolveType("a", url));
             Assert.Equal(NodeType.Html, HtmlHelper.ResolveType("a", urlPartial));
@@ -30,7 +30,7 @@ namespace Tests.UnitTests
         [Fact]
         public void TestNodeTypeResolvePartial()
         {
-            var urlSubPartial = "#23";
+            const string urlSubPartial = "#23";
 
             Assert.Equal(NodeType.Partial, HtmlHelper.ResolveType("a", urlSubPartial));
         }
@@ -38,8 +38,8 @@ namespace Tests.UnitTests
         [Fact]
         public void TestNodeTypeResolveText()
         {
-            var urlText = "https://subdomain.domain.com/text.txt";
-            var urlCss = "css/site.css";
+            const string urlText = "https://subdomain.domain.com/text.txt";
+            const string urlCss = "css/site.css";
 
             Assert.Equal(NodeType.Text, HtmlHelper.ResolveType("a", urlText));
             Assert.Equal(NodeType.Text, HtmlHelper.ResolveType("a", urlCss));

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Crawler.Logic;
 using Moq;
 using Xunit;
@@ -11,16 +12,17 @@ namespace Tests.IntegrationTests
         public ItemWriterTest()
         {
             _testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
-            var di = new DirectoryInfo(_testDirectoryPath);
-            if (di.Exists)
-                di.Delete(true);
+            var directory = new DirectoryInfo(_testDirectoryPath);
+
+            if (directory.Exists)
+                directory.Delete(true);
             else
-                di.Create();
+                directory.Create();
         }
 
         private readonly string _testDirectoryPath;
 
-        private static void FillAllFileNames(DirectoryInfo di, List<string> fileNames)
+        private static void FillAllFileNames(DirectoryInfo di, ICollection<string> fileNames)
         {
             fileNames.Add(di.FullName);
             foreach (var fileInfo in di.EnumerateFiles()) fileNames.Add(fileInfo.FullName);
@@ -28,14 +30,14 @@ namespace Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestFileWrite()
+        public async Task TestFileWrite()
         {
-            //setup
             var item1 = new Item("1", "http://site1/index.html");
             var item11 = new Item("1/internal", "http://site1/internal/internal.html");
             item1.AddItem(item11);
+
             var item2 = new Item("2", "http://site2/index.html");
-            var item21 = new Item("2/internal", "http://site2/otherinternal/some.html");
+            var item21 = new Item("2/internal", "http://site2/other_internal/some.html");
             item2.AddItem(item21);
             item1.AddItem(item2);
 
@@ -47,24 +49,22 @@ namespace Tests.IntegrationTests
             mapper.Setup(x => x.GetPath(item2.Uri, null))
                 .Returns(Path.Combine(_testDirectoryPath, "site2\\index.html"));
             mapper.Setup(x => x.GetPath(item21.Uri, null))
-                .Returns(Path.Combine(_testDirectoryPath, "site2\\otherinternal\\some.html"));
+                .Returns(Path.Combine(_testDirectoryPath, "site2\\other_internal\\some.html"));
 
-            //act
-            ItemWriter.Write(item1, mapper.Object);
+            await ItemWriter.Write(item1, mapper.Object).ConfigureAwait(false);
             var fileNames = new List<string>();
             FillAllFileNames(new DirectoryInfo(_testDirectoryPath), fileNames);
 
-            //verify
             Assert.Equal(9, fileNames.Count);
-            Assert.True(fileNames.Contains(_testDirectoryPath));
-            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1")));
-            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1\\index.html")));
-            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1\\internal")));
-            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html")));
-            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2")));
-            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2\\index.html")));
-            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2\\otherinternal")));
-            Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site2\\otherinternal\\some.html")));
+            Assert.Contains(_testDirectoryPath, fileNames);
+            Assert.Contains(Path.Combine(_testDirectoryPath, "site1"), fileNames);
+            Assert.Contains(Path.Combine(_testDirectoryPath, "site1\\index.html"), fileNames);
+            Assert.Contains(Path.Combine(_testDirectoryPath, "site1\\internal"), fileNames);
+            Assert.Contains(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html"), fileNames);
+            Assert.Contains(Path.Combine(_testDirectoryPath, "site2"), fileNames);
+            Assert.Contains(Path.Combine(_testDirectoryPath, "site2\\index.html"), fileNames);
+            Assert.Contains(Path.Combine(_testDirectoryPath, "site2\\other_internal"), fileNames);
+            Assert.Contains(Path.Combine(_testDirectoryPath, "site2\\other_internal\\some.html"), fileNames);
         }
     }
 }
