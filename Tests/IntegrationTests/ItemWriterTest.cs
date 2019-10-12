@@ -55,7 +55,7 @@ namespace Tests.IntegrationTests
             FillAllFileNames(new DirectoryInfo(_testDirectoryPath), fileNames);
 
             //verify
-            Assert.Equal(fileNames.Count, 9);
+            Assert.Equal(9, fileNames.Count);
             Assert.True(fileNames.Contains(_testDirectoryPath));
             Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1")));
             Assert.True(fileNames.Contains(Path.Combine(_testDirectoryPath, "site1\\index.html")));

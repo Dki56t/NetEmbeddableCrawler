@@ -8,12 +8,12 @@ namespace Crawler.Logic
 {
     internal static class ItemWriter
     {
-        public static void Write(Item item, IUrlMapper mapper)
+        public static async Task Write(Item item, IUrlMapper mapper)
         {
             var tasks = new List<Task>();
             Write(item, mapper, tasks, new ConcurrentDictionary<string, byte>());
 
-            Task.WaitAll(tasks.ToArray());
+            await Task.WhenAll(tasks.ToArray());
         }
 
         private static void Write(Item item, IUrlMapper mapper, List<Task> tasks,

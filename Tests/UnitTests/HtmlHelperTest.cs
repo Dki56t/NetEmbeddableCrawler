@@ -11,8 +11,8 @@ namespace Tests.UnitTests
             var url = "https://subdomain.domain.com";
             var urlJpeg = "https://subdomain.domain.com/picture.jpeg";
 
-            Assert.Equal(HtmlHelper.ResolveType("a", urlJpeg), NodeType.Binary);
-            Assert.Equal(HtmlHelper.ResolveType("img", url), NodeType.Binary);
+            Assert.Equal(NodeType.Binary, HtmlHelper.ResolveType("a", urlJpeg));
+            Assert.Equal(NodeType.Binary, HtmlHelper.ResolveType("img", url));
         }
 
         [Fact]
@@ -22,9 +22,9 @@ namespace Tests.UnitTests
             var urlPartial = "https://subdomain.domain.com/#23";
             var urlNumbers = "https://subdomain.domain.com/1.2.5";
 
-            Assert.Equal(HtmlHelper.ResolveType("a", url), NodeType.Html);
-            Assert.Equal(HtmlHelper.ResolveType("a", urlPartial), NodeType.Html);
-            Assert.Equal(HtmlHelper.ResolveType("a", urlNumbers), NodeType.Html);
+            Assert.Equal(NodeType.Html, HtmlHelper.ResolveType("a", url));
+            Assert.Equal(NodeType.Html, HtmlHelper.ResolveType("a", urlPartial));
+            Assert.Equal(NodeType.Html, HtmlHelper.ResolveType("a", urlNumbers));
         }
 
         [Fact]
@@ -32,7 +32,7 @@ namespace Tests.UnitTests
         {
             var urlSubPartial = "#23";
 
-            Assert.Equal(HtmlHelper.ResolveType("a", urlSubPartial), NodeType.Partial);
+            Assert.Equal(NodeType.Partial, HtmlHelper.ResolveType("a", urlSubPartial));
         }
 
         [Fact]
@@ -41,8 +41,8 @@ namespace Tests.UnitTests
             var urlText = "https://subdomain.domain.com/text.txt";
             var urlCss = "css/site.css";
 
-            Assert.Equal(HtmlHelper.ResolveType("a", urlText), NodeType.Text);
-            Assert.Equal(HtmlHelper.ResolveType("a", urlCss), NodeType.Text);
+            Assert.Equal(NodeType.Text, HtmlHelper.ResolveType("a", urlText));
+            Assert.Equal(NodeType.Text, HtmlHelper.ResolveType("a", urlCss));
         }
     }
 }
