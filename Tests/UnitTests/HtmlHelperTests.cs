@@ -3,10 +3,10 @@ using Xunit;
 
 namespace Tests.UnitTests
 {
-    public class HtmlHelperTest
+    public class HtmlHelperTests
     {
         [Fact]
-        public void TestNodeTypeResolveBinary()
+        public void ShouldResolveBinaryNodeType()
         {
             const string url = "https://subdomain.domain.com";
             const string urlJpeg = "https://subdomain.domain.com/picture.jpeg";
@@ -16,7 +16,7 @@ namespace Tests.UnitTests
         }
 
         [Fact]
-        public void TestNodeTypeResolveHtml()
+        public void ShouldResolveHtmlNodeType()
         {
             const string url = "https://subdomain.domain.com";
             const string urlPartial = "https://subdomain.domain.com/#23";
@@ -28,7 +28,7 @@ namespace Tests.UnitTests
         }
 
         [Fact]
-        public void TestNodeTypeResolvePartial()
+        public void ShouldResolvePartialNodeType()
         {
             const string urlSubPartial = "#23";
 
@@ -36,7 +36,7 @@ namespace Tests.UnitTests
         }
 
         [Fact]
-        public void TestNodeTypeResolveText()
+        public void ShouldResolveTextNodeType()
         {
             const string urlText = "https://subdomain.domain.com/text.txt";
             const string urlCss = "css/site.css";

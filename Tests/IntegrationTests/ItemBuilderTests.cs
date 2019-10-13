@@ -5,10 +5,10 @@ using Xunit;
 
 namespace Tests.IntegrationTests
 {
-    public class ItemBuilderTest
+    public class ItemBuilderTests
     {
         [Fact]
-        public async Task TestCrawling()
+        public async Task ShouldCrawl()
         {
             await CrawlHandler.Process(new Configuration
             {

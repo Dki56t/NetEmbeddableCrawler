@@ -1,7 +1,11 @@
 ﻿using System;
-using System.Net;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crawler.Logic
@@ -11,30 +15,43 @@ namespace Crawler.Logic
     /// </summary>
     internal class FileLoader : IFileLoader
     {
+        private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
+
+        private static readonly HashSet<Type> ListOfExceptionsItIsAllowedToSuppress = new HashSet<Type>
+        {
+            typeof(TaskCanceledException),
+            typeof(AuthenticationException),
+            typeof(SocketException),
+            typeof(HttpRequestException)
+        };
+
+        private readonly ConcurrentDictionary<string, byte> _processedUrls = new ConcurrentDictionary<string, byte>();
+
         public virtual async Task<byte[]> LoadBytes(string url)
         {
-            try
-            {
-                using var client = new HttpClient();
-                return await (await client.GetAsync(url).ConfigureAwait(false)).Content.ReadAsByteArrayAsync()
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                if (AllowSkipException(ex))
-                    return null;
-
-                throw;
-            }
+            return await HandleAllowedExceptions(url,
+                    async content => await content.ReadAsByteArrayAsync().ConfigureAwait(false))
+                .ConfigureAwait(false);
         }
 
         public virtual async Task<string> LoadString(string url)
         {
+            return await HandleAllowedExceptions(url,
+                    async content => await content.ReadAsStringAsync().ConfigureAwait(false))
+                .ConfigureAwait(false);
+        }
+
+        private async Task<TResult> HandleAllowedExceptions<TResult>(string url, Func<HttpContent, Task<TResult>> action)
+            where TResult : class
+        {
+            EnsureFirstLoading(url);
+
             try
             {
-                using var client = new HttpClient();
-                return await (await client.GetAsync(url).ConfigureAwait(false)).Content.ReadAsStringAsync()
-                    .ConfigureAwait(false);
+                var response = await GetAsync(url).ConfigureAwait(false);
+                if (response == null) return null;
+
+                return await action(response.Content).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -45,45 +62,29 @@ namespace Crawler.Logic
             }
         }
 
+        private static async Task<HttpResponseMessage> GetAsync(string url)
+        {
+            using var cts = new CancellationTokenSource(Timeout);
+            using var client = new HttpClient();
+            var message = await client.GetAsync(url, cts.Token).ConfigureAwait(false);
+            var numCode = (int) message.StatusCode;
+            return numCode > 299 || numCode < 200 ? null : message;
+        }
+
+        [Conditional("DEBUG")]
+        private void EnsureFirstLoading(string url)
+        {
+            if (!_processedUrls.TryAdd(url, 0))
+                throw new InvalidOperationException($"Unnecessary content downloading from url: {url}");
+        }
+
         private static bool AllowSkipException(Exception exception)
         {
-            var (rootException, webException) = GetRootAndWebException(exception);
-
-            return AllowSkipWebException(webException) ||
-                   rootException is SocketException socketException
-                   && (socketException.SocketErrorCode == SocketError.AccessDenied ||
-                       socketException.SocketErrorCode == SocketError.TimedOut || // www.linkedin.com
-                       socketException.SocketErrorCode == SocketError.ConnectionReset); // www.ru.linkedin.com
-        }
-
-        private static bool AllowSkipWebException(WebException webException)
-        {
-            if (webException == null)
+            if (exception == null)
                 return false;
 
-            var webResp = webException.Response as HttpWebResponse;
-            if (webResp != null && webResp.StatusCode == HttpStatusCode.Forbidden)
-                // Access is forbidden.
-                return true;
-
-            return webResp != null && webResp.StatusCode == HttpStatusCode.NotFound;
-        }
-
-        private static (Exception rootException, WebException webException) GetRootAndWebException(Exception ex)
-        {
-            WebException webException = null;
-            Exception rootException = null;
-
-            var current = ex;
-            while (current != null)
-            {
-                if (current is WebException web) webException = web;
-                if (current.InnerException == null) rootException = current;
-
-                current = current.InnerException;
-            }
-
-            return (rootException, webException);
+            var type = exception.GetType();
+            return ListOfExceptionsItIsAllowedToSuppress.Contains(type) || AllowSkipException(exception.InnerException);
         }
     }
 }

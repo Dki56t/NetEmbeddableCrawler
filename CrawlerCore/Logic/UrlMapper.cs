@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace Crawler.Logic
 {
@@ -8,6 +10,15 @@ namespace Crawler.Logic
     {
         private const string Index = "index.html";
         private const int MaxFileNameLength = 200;
+
+        private static readonly Dictionary<char, string> ProhibitCharacters = new Dictionary<char, string>
+        {
+            {'?', "_p_"},
+            {'%', "_pr_"},
+            {'&', "_am_"},
+            {'/', "_sl_"},
+            {'|', "_ch_"}
+        };
 
         /// <summary>
         ///     Contains map url from html (as a key) to path in file system.
@@ -55,26 +66,46 @@ namespace Crawler.Logic
 
         private static string GetFileNameOrDefault(string fileName, string query, NodeType? nodeType)
         {
-            // Include query string manually to be valid for file system and browser.
-            var normalizedQuery = query
-                .Replace("?", "_p_")
-                .Replace("%", "_pr_")
-                .Replace("&", "_am_")
-                .Replace("/", "_sl_");
+            var normalizedQuery = NormalizeStringForHtmlAndFileSystem(query);
             if (normalizedQuery.Length > 100)
                 normalizedQuery = $"_p_{Guid.NewGuid()}";
-            if (string.IsNullOrEmpty(fileName) && string.IsNullOrEmpty(normalizedQuery))
+
+            var normalizedFileName = NormalizeStringForHtmlAndFileSystem(fileName);
+            if (string.IsNullOrEmpty(normalizedFileName) && string.IsNullOrEmpty(normalizedQuery))
                 return Index;
-            var extension = Path.GetExtension(fileName);
+            var extension = Path.GetExtension(normalizedFileName);
             if (!string.IsNullOrWhiteSpace(normalizedQuery) || string.IsNullOrEmpty(extension) ||
                 nodeType == NodeType.Html)
                 extension = ".html";
+
             // If query exists we save extension before query for file name.
-            fileName =
-                $"{(string.IsNullOrWhiteSpace(normalizedQuery) && nodeType != NodeType.Html ? Path.GetFileNameWithoutExtension(fileName) : Path.GetFileName(fileName))}" +
+            normalizedFileName =
+                $"{(string.IsNullOrWhiteSpace(normalizedQuery) && nodeType != NodeType.Html ? Path.GetFileNameWithoutExtension(normalizedFileName) : Path.GetFileName(normalizedFileName))}" +
                 $"{normalizedQuery}{extension}";
 
-            return fileName;
+            return normalizedFileName;
+        }
+
+        /// <summary>
+        ///     Replaces prohibit character with special string from static table.
+        /// </summary>
+        /// <returns>String with replaced prohibit characters.</returns>
+        private static string NormalizeStringForHtmlAndFileSystem(string str)
+        {
+            StringBuilder result = null;
+
+            for (var i = 0; i < str.Length; i++)
+                if (ProhibitCharacters.ContainsKey(str[i]))
+                {
+                    result ??= new StringBuilder(str.Substring(0, i));
+                    result.Append(ProhibitCharacters[str[i]]);
+                }
+                else
+                {
+                    result?.Append(str[i]);
+                }
+
+            return result?.ToString() ?? str;
         }
 
         private static string GetFileName(Uri uri)

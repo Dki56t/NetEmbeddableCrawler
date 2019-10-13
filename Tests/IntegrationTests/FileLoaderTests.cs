@@ -4,10 +4,10 @@ using Xunit;
 
 namespace Tests.IntegrationTests
 {
-    public class FileLoaderTest
+    public class FileLoaderTests
     {
         [Fact]
-        public async Task TestSkipExceptions()
+        public async Task ShouldSkipExceptions()
         {
             var loader = new FileLoader();
             await loader.LoadString("https://ru.linkedin.com").ConfigureAwait(false);

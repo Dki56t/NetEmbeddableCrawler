@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Crawler.Logic
 {
-    public static class HtmlHelper
+    internal static class HtmlHelper
     {
         public static NodeType ResolveType(string nodeName, string url)
         {

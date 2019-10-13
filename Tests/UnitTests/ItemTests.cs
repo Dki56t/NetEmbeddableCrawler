@@ -4,10 +4,10 @@ using Xunit;
 
 namespace Tests.UnitTests
 {
-    public class ItemTest
+    public class ItemTests
     {
         [Fact]
-        public void TestGetRoot()
+        public void ShouldGetRoot()
         {
             var parent1 = new Item("", "");
             var parent2 = new Item("", "");
@@ -20,7 +20,7 @@ namespace Tests.UnitTests
         }
 
         [Fact]
-        public void TestParentOnlyOne()
+        public void ShouldThrowsIfCountOfParentsMoreThanOne()
         {
             var parent1 = new Item("", "");
             var parent2 = new Item("", "");

@@ -2,7 +2,7 @@
 
 namespace Crawler.Logic
 {
-    public static class UrlHelper
+    internal static class UrlHelper
     {
         public static bool IsExternalLink(string url)
         {
@@ -22,7 +22,7 @@ namespace Crawler.Logic
             if (url.EndsWith("/"))
                 url = url.Remove(url.LastIndexOf("/", StringComparison.Ordinal));
 
-            return url;
+            return !Uri.TryCreate(url, UriKind.Absolute, out _) ? null : url;
         }
 
         public static string GetPartialUrl(string url)

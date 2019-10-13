@@ -7,9 +7,9 @@ using Xunit;
 
 namespace Tests.IntegrationTests
 {
-    public class ItemWriterTest
+    public class ItemWriterTests
     {
-        public ItemWriterTest()
+        public ItemWriterTests()
         {
             _testDirectoryPath = Path.Combine(Path.GetTempPath(), "TestFileWrite");
             var directory = new DirectoryInfo(_testDirectoryPath);
@@ -30,7 +30,7 @@ namespace Tests.IntegrationTests
         }
 
         [Fact]
-        public async Task TestFileWrite()
+        public async Task ShouldWriteItemsTreeToFileSystem()
         {
             var item1 = new Item("1", "http://site1/index.html");
             var item11 = new Item("1/internal", "http://site1/internal/internal.html");
