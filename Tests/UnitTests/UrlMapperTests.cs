@@ -28,43 +28,43 @@ namespace Tests.UnitTests
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
                     @"site1\_ch_.html"),
-                mapper.GetPath("http://site1/|"));
+                mapper.CreatePath("http://site1/|"));
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
                     @"site1\index.html"),
-                mapper.GetPath("http://site1/"));
+                mapper.CreatePath("http://site1/"));
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
                     @"site1\issues_p_q=is_pr_3Aopen+is_pr_3Aissue.html"),
-                mapper.GetPath("http://site1/issues?q=is%3Aopen+is%3Aissue"));
+                mapper.CreatePath("http://site1/issues?q=is%3Aopen+is%3Aissue"));
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
                     @"site1\issues_p_q=is_pr_3Aissue+is_pr_3Aclosed.html"),
-                mapper.GetPath("http://site1/issues?q=is%3Aissue+is%3Aclosed"));
+                mapper.CreatePath("http://site1/issues?q=is%3Aissue+is%3Aclosed"));
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
                     @"site1\issues_p_q=is_pr_3Aissue+is_pr_3Aopen+sort_pr_3Acreated-asc.html"),
-                mapper.GetPath("http://site1/issues?q=is%3Aissue+is%3Aopen+sort%3Acreated-asc"));
+                mapper.CreatePath("http://site1/issues?q=is%3Aissue+is%3Aopen+sort%3Acreated-asc"));
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
                     @"site1\issues_p_q=is_pr_3Aissue+is_pr_3Aopen+sort_pr_3Acomments-desc.html"),
-                mapper.GetPath("http://site1/issues?q=is%3Aissue+is%3Aopen+sort%3Acomments-desc"));
+                mapper.CreatePath("http://site1/issues?q=is%3Aissue+is%3Aopen+sort%3Acomments-desc"));
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
                     @"site1\issues.html"),
-                mapper.GetPath("http://site1/issues"));
+                mapper.CreatePath("http://site1/issues"));
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
                     @"site1\sharer.php_p_u=http_pr_3A_pr_2F_pr_2Fhtml-agility-pack.net_pr_2F.html"),
-                mapper.GetPath("http://site1/sharer.php?u=http%3A%2F%2Fhtml-agility-pack.net%2F"));
+                mapper.CreatePath("http://site1/sharer.php?u=http%3A%2F%2Fhtml-agility-pack.net%2F"));
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
                     @"site1.net\_p_ref=topbar_help.html"),
-                mapper.GetPath("http://site1.net/?ref=topbar_help"));
+                mapper.CreatePath("http://site1.net/?ref=topbar_help"));
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
                     @"site1.net\_p__am__pr_25.html"),
-                mapper.GetPath("http://site1.net/?&%25"));
+                mapper.CreatePath("http://site1.net/?&%25"));
         }
 
         [Fact]
@@ -75,13 +75,13 @@ namespace Tests.UnitTests
                 DestinationFolder = _testDirectoryPath
             });
 
-            Assert.Equal(mapper.GetPath("http://site1/"),
+            Assert.Equal(mapper.CreatePath("http://site1/"),
                 Path.Combine(_testDirectoryPath, @"site1\index.html"));
-            Assert.Equal(mapper.GetPath("http://site1/test/some"),
+            Assert.Equal(mapper.CreatePath("http://site1/test/some"),
                 Path.Combine(_testDirectoryPath, @"site1\test\some.html"));
-            Assert.Equal(mapper.GetPath("http://site1/css/style.css"),
+            Assert.Equal(mapper.CreatePath("http://site1/css/style.css"),
                 Path.Combine(_testDirectoryPath, @"site1\css\style.css"));
-            Assert.Equal(mapper.GetPath("http://site1/test/1.5.5", NodeType.Html),
+            Assert.Equal(mapper.CreatePath("http://site1/test/1.5.5", NodeType.Html),
                 Path.Combine(_testDirectoryPath, @"site1\test\1.5.5.html"));
         }
 
@@ -93,9 +93,9 @@ namespace Tests.UnitTests
                 DestinationFolder = _testDirectoryPath
             });
 
-            Assert.Equal(mapper.GetPath("http://site4/#"),
+            Assert.Equal(mapper.CreatePath("http://site4/#"),
                 Path.Combine(_testDirectoryPath, @"site4\index.html"));
-            Assert.Equal(mapper.GetPath("http://site4/test/some.html/#part-2"),
+            Assert.Equal(mapper.CreatePath("http://site4/test/some.html/#part-2"),
                 Path.Combine(_testDirectoryPath, @"site4\test\some.html"));
         }
 
@@ -107,16 +107,16 @@ namespace Tests.UnitTests
                 DestinationFolder = _testDirectoryPath
             });
 
-            Assert.Equal(mapper.GetPath("http://site1/index.html"),
+            Assert.Equal(mapper.CreatePath("http://site1/index.html"),
                 Path.Combine(_testDirectoryPath, @"site1\index.html"));
 
-            Assert.Equal(mapper.GetPath("http://site1/internal/internal.html"),
+            Assert.Equal(mapper.CreatePath("http://site1/internal/internal.html"),
                 Path.Combine(_testDirectoryPath, @"site1\internal\internal.html"));
 
-            Assert.Equal(mapper.GetPath("http://site2/index2.html"),
+            Assert.Equal(mapper.CreatePath("http://site2/index2.html"),
                 Path.Combine(_testDirectoryPath, @"site2\index2.html"));
 
-            Assert.Equal(mapper.GetPath("http://site2/other_internal/some.html"),
+            Assert.Equal(mapper.CreatePath("http://site2/other_internal/some.html"),
                 Path.Combine(_testDirectoryPath, @"site2\other_internal\some.html"));
         }
 
@@ -128,9 +128,9 @@ namespace Tests.UnitTests
                 DestinationFolder = _testDirectoryPath
             });
 
-            Assert.Equal(mapper.GetPath("http://site3/"),
+            Assert.Equal(mapper.CreatePath("http://site3/"),
                 Path.Combine(_testDirectoryPath, @"site3\index.html"));
-            Assert.Equal(mapper.GetPath("http://site3/test/some.html/"),
+            Assert.Equal(mapper.CreatePath("http://site3/test/some.html/"),
                 Path.Combine(_testDirectoryPath, @"site3\test\some.html"));
         }
 
@@ -143,11 +143,11 @@ namespace Tests.UnitTests
             {
                 DestinationFolder = _testDirectoryPath
             });
-            mapper.GetPath(item1.Uri);
+            mapper.CreatePath(item1.Uri);
 
-            Assert.Equal(mapper.GetPath("http://site1/test/some"),
+            Assert.Equal(mapper.CreatePath("http://site1/test/some"),
                 Path.Combine(_testDirectoryPath, @"site1\test\some.html"));
-            Assert.Equal(mapper.GetPath("http://site1/"),
+            Assert.Equal(mapper.CreatePath("http://site1/"),
                 Path.Combine(_testDirectoryPath, @"site1\index.html"));
         }
 
@@ -160,7 +160,7 @@ namespace Tests.UnitTests
                 DestinationFolder = _testDirectoryPath
             });
 
-            Assert.Equal(mapper.GetPath(longUrl).Length,
+            Assert.Equal(mapper.CreatePath(longUrl).Length,
                 _testDirectoryPath.Length + "url".Length + 2 * (@"\" + Guid.Empty).Length + ".jpeg".Length);
         }
 
@@ -174,9 +174,9 @@ namespace Tests.UnitTests
             {
                 DestinationFolder = _testDirectoryPath
             });
-            mapper.GetPath(item1.Uri);
+            mapper.CreatePath(item1.Uri);
 
-            Assert.Equal(mapper.GetPath(longUrl).Length,
+            Assert.Equal(mapper.CreatePath(longUrl).Length,
                 _testDirectoryPath.Length + "url".Length + 2 * (@"\" + Guid.Empty).Length + ".jpeg".Length);
         }
 
@@ -189,7 +189,7 @@ namespace Tests.UnitTests
                 DestinationFolder = _testDirectoryPath
             });
 
-            Assert.Equal(mapper.GetPath(longUrl).Length,
+            Assert.Equal(mapper.CreatePath(longUrl).Length,
                 _testDirectoryPath.Length + @"url\_p_".Length + (@"\" + Guid.Empty).Length + ".html".Length);
         }
     }

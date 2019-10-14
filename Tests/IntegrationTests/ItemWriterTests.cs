@@ -42,13 +42,13 @@ namespace Tests.IntegrationTests
             item1.AddItem(item2);
 
             var mapper = new Mock<IUrlMapper>();
-            mapper.Setup(x => x.GetPath(item1.Uri, null))
+            mapper.Setup(x => x.CreatePath(item1.Uri, null))
                 .Returns(Path.Combine(_testDirectoryPath, "site1\\index.html"));
-            mapper.Setup(x => x.GetPath(item11.Uri, null))
+            mapper.Setup(x => x.CreatePath(item11.Uri, null))
                 .Returns(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html"));
-            mapper.Setup(x => x.GetPath(item2.Uri, null))
+            mapper.Setup(x => x.CreatePath(item2.Uri, null))
                 .Returns(Path.Combine(_testDirectoryPath, "site2\\index.html"));
-            mapper.Setup(x => x.GetPath(item21.Uri, null))
+            mapper.Setup(x => x.CreatePath(item21.Uri, null))
                 .Returns(Path.Combine(_testDirectoryPath, "site2\\other_internal\\some.html"));
 
             await ItemWriter.Write(item1, mapper.Object).ConfigureAwait(false);

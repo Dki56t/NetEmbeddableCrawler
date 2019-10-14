@@ -19,7 +19,7 @@ namespace Crawler.Logic
         private static void Write(Item item, IUrlMapper mapper, ICollection<Task> tasks,
             ConcurrentDictionary<string, Item> paths)
         {
-            var path = mapper.GetPath(item.Uri);
+            var path = mapper.CreatePath(item.Uri);
             var directoryPath = Path.GetDirectoryName(path);
             if (!Directory.Exists(Path.GetDirectoryName(path)))
                 Directory.CreateDirectory(directoryPath ?? throw new InvalidOperationException($"Invalid path {path}"));

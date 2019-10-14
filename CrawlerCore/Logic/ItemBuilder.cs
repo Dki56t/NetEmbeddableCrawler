@@ -35,7 +35,7 @@ namespace Crawler.Logic
                 throw new InvalidOperationException("Root node can not be processed");
 
             var item = new Item(htmlDoc.DocumentNode.OuterHtml, rootLink);
-            _mapper.GetPath(item.Uri, NodeType.Html);
+            _mapper.CreatePath(item.Uri, NodeType.Html);
 
             var context = new WalkContext(rootLink, htmlDoc.DocumentNode);
             await Walk(item, htmlDoc.DocumentNode, context, rootLink, _cfg.Depth)
@@ -68,7 +68,7 @@ namespace Crawler.Logic
                 var partialPart = UrlHelper.GetPartialUrl(uri);
                 var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
                 if (UrlHelper.IsExternalLink(link.Value) || type == NodeType.Html)
-                    link.Value = $"{_mapper.GetPath(uri, type)}{partialPart}";
+                    link.Value = $"{_mapper.CreatePath(uri, type)}{partialPart}";
 
                 // Check if processing is necessary.
                 if (!context.TryRequestContentProcessing(uri, node))
@@ -168,12 +168,7 @@ namespace Crawler.Logic
 
         private bool CrawlingIsAllowed(string root, string newRoot)
         {
-            if (_cfg.FullTraversal)
-                return true;
-
-            var newRootUri = new Uri(newRoot);
-            var currentRootUri = new Uri(root);
-            return newRootUri.Host == currentRootUri.Host;
+            return _cfg.FullTraversal || UrlHelper.EqualHosts(root, newRoot);
         }
 
         // Loads html document from url.

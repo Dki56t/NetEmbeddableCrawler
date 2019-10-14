@@ -32,20 +32,13 @@ namespace Crawler.Logic
             _outputDirectory = cfg.DestinationFolder;
         }
 
-        public virtual string GetPath(string url, NodeType? nodeType = null)
+        public virtual string CreatePath(string url, NodeType? nodeType = null)
         {
             var normalizedUrl = UrlHelper.NormalizeUrl(url);
             if (_map.ContainsKey(normalizedUrl))
                 return _map[normalizedUrl];
 
             var uri = new Uri(normalizedUrl);
-            var fileName = GetFileName(uri);
-            // SubUrl it is a part of url between host name and last segment (if last segment is file name).
-            var subUrl = GetDirectoryName(uri);
-
-            // If subUrl is empty, it won't insert into link.
-            if (subUrl == null || subUrl == "\\")
-                subUrl = string.Empty;
 
             var hostUrl = UrlHelper.ExtractRoot(normalizedUrl);
             if (!_map.ContainsKey(hostUrl))
@@ -56,8 +49,17 @@ namespace Crawler.Logic
                 if (hostUrl == normalizedUrl)
                     return _map[normalizedUrl];
             }
-
+            
             var hostDirectoryPath = Path.GetDirectoryName(_map[hostUrl]);
+            
+            // SubUrl it is a part of url between host name and last segment (if last segment is file name).
+            var subUrl = GetDirectoryName(uri);
+
+            // If subUrl is empty, it won't insert into link.
+            if (subUrl == null || subUrl == "\\")
+                subUrl = string.Empty;
+            
+            var fileName = GetFileName(uri);
             var filePath = $"{hostDirectoryPath}{subUrl}\\{GetFileNameOrDefault(fileName, uri.Query, nodeType)}";
 
             _map.AddOrUpdate(normalizedUrl, _ => filePath, (key, value) => value);
@@ -66,13 +68,14 @@ namespace Crawler.Logic
 
         private static string GetFileNameOrDefault(string fileName, string query, NodeType? nodeType)
         {
+            var normalizedFileName = NormalizeStringForHtmlAndFileSystem(fileName);
             var normalizedQuery = NormalizeStringForHtmlAndFileSystem(query);
             if (normalizedQuery.Length > 100)
                 normalizedQuery = $"_p_{Guid.NewGuid()}";
 
-            var normalizedFileName = NormalizeStringForHtmlAndFileSystem(fileName);
             if (string.IsNullOrEmpty(normalizedFileName) && string.IsNullOrEmpty(normalizedQuery))
                 return Index;
+
             var extension = Path.GetExtension(normalizedFileName);
             if (!string.IsNullOrWhiteSpace(normalizedQuery) || string.IsNullOrEmpty(extension) ||
                 nodeType == NodeType.Html)

@@ -2,6 +2,6 @@
 {
     public interface IUrlMapper
     {
-        string GetPath(string url, NodeType? nodeType = null);
+        string CreatePath(string url, NodeType? nodeType = null);
     }
 }

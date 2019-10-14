@@ -49,7 +49,7 @@ namespace Tests.UnitTests
         public async Task ShouldChangeUrlsToStaticContent()
         {
             var mapperMock = new Mock<IUrlMapper>();
-            mapperMock.Setup(x => x.GetPath("css/style.css", NodeType.Text))
+            mapperMock.Setup(x => x.CreatePath("css/style.css", NodeType.Text))
                 .Returns("directory/css/style.css");
 
             var loaderMock = new Mock<IFileLoader>();
@@ -111,9 +111,9 @@ namespace Tests.UnitTests
                                  "</body>";
 
             var mapperMock = new Mock<IUrlMapper>();
-            mapperMock.Setup(m => m.GetPath(MainUrl, It.IsAny<NodeType?>()))
+            mapperMock.Setup(m => m.CreatePath(MainUrl, It.IsAny<NodeType?>()))
                 .Returns(mainPath);
-            mapperMock.Setup(m => m.GetPath(SubUrl, It.IsAny<NodeType?>()))
+            mapperMock.Setup(m => m.CreatePath(SubUrl, It.IsAny<NodeType?>()))
                 .Returns(subPath);
 
             var loaderMock = new Mock<IFileLoader>();

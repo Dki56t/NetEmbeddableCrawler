@@ -49,5 +49,16 @@ namespace Tests.UnitTests
             Assert.Null(UrlHelper.NormalizeUrl("//"));
             Assert.Null(UrlHelper.NormalizeUrl(";"));
         }
+
+        [Fact]
+        public void ShouldDetermineEqualHosts()
+        {
+            Assert.True(UrlHelper.EqualHosts("http://site.com", "http://site.com"));
+            Assert.True(UrlHelper.EqualHosts("http://SITE.com", "http://site.com"));
+            Assert.True(UrlHelper.EqualHosts("https://site.com", "http://site.com"));
+            Assert.True(UrlHelper.EqualHosts("https://site.com", "http://site.com/page"));
+            Assert.False(UrlHelper.EqualHosts("https://site1.com", "http://site.com"));
+            Assert.False(UrlHelper.EqualHosts("https://site.com", "http://site.net"));
+        }
     }
 }

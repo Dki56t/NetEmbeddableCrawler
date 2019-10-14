@@ -50,5 +50,14 @@ namespace Crawler.Logic
                 return $"{root}{relative}";
             return $"{root}{delimiter}{relative}";
         }
+
+        public static bool EqualHosts(string first, string second)
+        {
+            var newRootUri = new Uri(first);
+            var currentRootUri = new Uri(second);
+
+            return Uri.Compare(currentRootUri, newRootUri, UriComponents.Host, UriFormat.SafeUnescaped,
+                StringComparison.InvariantCultureIgnoreCase) == 0;
+        }
     }
 }
