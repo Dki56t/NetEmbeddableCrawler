@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Crawler.Logic;
 
@@ -14,6 +15,11 @@ namespace Crawler
 
         public static async Task Process(Configuration configuration)
         {
+            await Process(configuration, CancellationToken.None).ConfigureAwait(false);
+        }
+
+        public static async Task Process(Configuration configuration, CancellationToken token)
+        {
             if (!string.IsNullOrEmpty(configuration.DestinationFolder))
             {
                 var tmpPath = Path.GetTempPath();
@@ -21,9 +27,9 @@ namespace Crawler
                 configuration.DestinationFolder = configuration.DestinationFolder.Replace("${TempPath}", tmpPath);
             }
 
-            var loader = new FileLoader();
+            var loader = new FileLoader(token);
             var mapper = new UrlMapper(configuration);
-            var builder = new ItemBuilder(configuration, mapper, loader);
+            var builder = new ItemBuilder(configuration, mapper, loader, token);
             var root = await builder.Build().ConfigureAwait(false);
 
             await ItemWriter.Write(root, mapper).ConfigureAwait(false);

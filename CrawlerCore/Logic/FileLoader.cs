@@ -15,6 +15,7 @@ namespace Crawler.Logic
     /// </summary>
     internal class FileLoader : IFileLoader
     {
+        private readonly CancellationToken _token;
         private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
 
         private static readonly HashSet<Type> ListOfExceptionsItIsAllowedToSuppress = new HashSet<Type>
@@ -27,8 +28,15 @@ namespace Crawler.Logic
 
         private readonly ConcurrentDictionary<string, byte> _processedUrls = new ConcurrentDictionary<string, byte>();
 
+        public FileLoader(CancellationToken token)
+        {
+            _token = token;
+        }
+
         public virtual async Task<byte[]> LoadBytes(string url)
         {
+            _token.ThrowIfCancellationRequested();
+
             return await HandleAllowedExceptions(url,
                     async content => await content.ReadAsByteArrayAsync().ConfigureAwait(false))
                 .ConfigureAwait(false);
@@ -36,6 +44,8 @@ namespace Crawler.Logic
 
         public virtual async Task<string> LoadString(string url)
         {
+            _token.ThrowIfCancellationRequested();
+
             return await HandleAllowedExceptions(url,
                     async content => await content.ReadAsStringAsync().ConfigureAwait(false))
                 .ConfigureAwait(false);
@@ -62,20 +72,15 @@ namespace Crawler.Logic
             }
         }
 
-        private static async Task<HttpResponseMessage> GetAsync(string url)
+        private async Task<HttpResponseMessage> GetAsync(string url)
         {
-            using var cts = new CancellationTokenSource(Timeout);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_token);
+            cts.CancelAfter(Timeout);
+
             using var client = new HttpClient();
             var message = await client.GetAsync(url, cts.Token).ConfigureAwait(false);
             var numCode = (int) message.StatusCode;
             return numCode > 299 || numCode < 200 ? null : message;
-        }
-
-        [Conditional("DEBUG")]
-        private void EnsureFirstLoading(string url)
-        {
-            if (!_processedUrls.TryAdd(url, 0))
-                throw new InvalidOperationException($"Unnecessary content downloading from url: {url}");
         }
 
         private static bool AllowSkipException(Exception exception)
@@ -85,6 +90,13 @@ namespace Crawler.Logic
 
             var type = exception.GetType();
             return ListOfExceptionsItIsAllowedToSuppress.Contains(type) || AllowSkipException(exception.InnerException);
+        }
+
+        [Conditional("DEBUG")]
+        private void EnsureFirstLoading(string url)
+        {
+            if (!_processedUrls.TryAdd(url, 0))
+                throw new InvalidOperationException($"Unnecessary content downloading from url: {url}");
         }
     }
 }

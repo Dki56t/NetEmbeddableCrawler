@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 
@@ -10,17 +11,21 @@ namespace Crawler.Logic
     {
         private readonly Configuration _cfg;
         private readonly IFileLoader _loader;
+        private readonly CancellationToken _token;
         private readonly IUrlMapper _mapper;
 
-        public ItemBuilder(Configuration cfg, IUrlMapper mapper, IFileLoader loader)
+        public ItemBuilder(Configuration cfg, IUrlMapper mapper, IFileLoader loader, CancellationToken token)
         {
             _cfg = cfg;
             _mapper = mapper;
             _loader = loader;
+            _token = token;
         }
 
         public async Task<Item> Build()
         {
+            _token.ThrowIfCancellationRequested();
+
             var rootLink = UrlHelper.NormalizeUrl(_cfg.RootLink);
             if (string.IsNullOrEmpty(rootLink))
                 throw new InvalidOperationException("Invalid root link");
@@ -40,6 +45,8 @@ namespace Crawler.Logic
 
         private Task Walk(Item item, HtmlNode node, WalkContext context, string root, int depth)
         {
+            _token.ThrowIfCancellationRequested();
+
             if (depth == 0)
                 return Task.CompletedTask;
 

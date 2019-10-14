@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using Crawler.Logic;
 using Xunit;
 
@@ -9,7 +10,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public async Task ShouldSkipExceptions()
         {
-            var loader = new FileLoader();
+            var loader = new FileLoader(CancellationToken.None);
             await loader.LoadString("https://ru.linkedin.com").ConfigureAwait(false);
         }
     }

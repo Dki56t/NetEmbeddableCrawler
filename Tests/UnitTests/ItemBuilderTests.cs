@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Crawler;
 using Crawler.Logic;
@@ -34,7 +35,8 @@ namespace Tests.UnitTests
             loaderMock.Setup(x => x.LoadString("http://site1.com/sub-page"))
                 .ReturnsAsync("<body></body>");
 
-            var builder = new ItemBuilder(_cfg, new Mock<IUrlMapper>().Object, loaderMock.Object);
+            var builder = new ItemBuilder(_cfg, new Mock<IUrlMapper>().Object, loaderMock.Object,
+                CancellationToken.None);
 
             var item = await builder.Build().ConfigureAwait(false);
 
@@ -56,7 +58,8 @@ namespace Tests.UnitTests
             loaderMock.Setup(x => x.LoadString("http://site1.com/css/style.css"))
                 .ReturnsAsync("");
 
-            var builder = new ItemBuilder(_cfg, mapperMock.Object, loaderMock.Object);
+            var builder = new ItemBuilder(_cfg, mapperMock.Object, loaderMock.Object,
+                CancellationToken.None);
 
             var item = await builder.Build().ConfigureAwait(false);
 
@@ -78,7 +81,8 @@ namespace Tests.UnitTests
                               "<a href=\"https://site1.com/\"> </a>" +
                               "</body>");
 
-            var builder = new ItemBuilder(_cfg, new Mock<IUrlMapper>().Object, loaderMock.Object);
+            var builder = new ItemBuilder(_cfg, new Mock<IUrlMapper>().Object, loaderMock.Object,
+                CancellationToken.None);
 
             var item = await builder.Build().ConfigureAwait(false);
 
@@ -118,7 +122,8 @@ namespace Tests.UnitTests
             loaderMock.Setup(x => x.LoadString(SubUrl))
                 .ReturnsAsync(subPageContent);
 
-            var builder = new ItemBuilder(_cfg, mapperMock.Object, loaderMock.Object);
+            var builder = new ItemBuilder(_cfg, mapperMock.Object, loaderMock.Object,
+                CancellationToken.None);
 
             var item = await builder.Build().ConfigureAwait(false);
 
@@ -146,7 +151,7 @@ namespace Tests.UnitTests
             {
                 Depth = 3,
                 RootLink = MainUrl
-            }, mapperMock.Object, loaderMock.Object);
+            }, mapperMock.Object, loaderMock.Object, CancellationToken.None);
 
             var item = await builder.Build().ConfigureAwait(false);
 
@@ -167,7 +172,8 @@ namespace Tests.UnitTests
 
             var mapperMock = new Mock<IUrlMapper>();
 
-            var builder = new ItemBuilder(_cfg, mapperMock.Object, loaderMock.Object);
+            var builder = new ItemBuilder(_cfg, mapperMock.Object, loaderMock.Object,
+                CancellationToken.None);
 
             var item = await builder.Build().ConfigureAwait(false);
 
@@ -175,14 +181,37 @@ namespace Tests.UnitTests
         }
 
         [Fact]
-        public async Task ShouldThrowIfRootLinkIsInvalid()
+        public async Task ShouldThrowsIfCancellationRequested()
+        {
+            var loaderMock = new Mock<IFileLoader>();
+            loaderMock.Setup(x => x.LoadString(MainUrl))
+                .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
+            loaderMock.Setup(x => x.LoadString(SubUrl))
+                .ReturnsAsync("");
+
+            using var cts = new CancellationTokenSource();
+            var builder = new ItemBuilder(new Configuration
+            {
+                Depth = 3,
+                RootLink = MainUrl
+            }, new Mock<IUrlMapper>().Object, loaderMock.Object, cts.Token);
+
+            cts.Cancel();
+
+            await Assert.ThrowsAsync<OperationCanceledException>(
+                    async () => await builder.Build().ConfigureAwait(false))
+                .ConfigureAwait(false);
+        }
+
+        [Fact]
+        public async Task ShouldThrowsIfRootLinkIsInvalid()
         {
             var mapperMock = new Mock<IUrlMapper>();
             var loaderMock = new Mock<IFileLoader>();
             var builder = new ItemBuilder(new Configuration
             {
                 RootLink = "//"
-            }, mapperMock.Object, loaderMock.Object);
+            }, mapperMock.Object, loaderMock.Object, CancellationToken.None);
 
             await Assert.ThrowsAsync<InvalidOperationException>(
                     async () => await builder.Build().ConfigureAwait(false))
@@ -190,7 +219,7 @@ namespace Tests.UnitTests
         }
 
         [Fact]
-        public async Task ShouldThrowIfUnhandledExceptionThrown()
+        public async Task ShouldThrowsIfUnhandledExceptionThrown()
         {
             var loaderMock = new Mock<IFileLoader>();
             loaderMock.Setup(x => x.LoadString(MainUrl))
@@ -202,7 +231,7 @@ namespace Tests.UnitTests
             {
                 Depth = 3,
                 RootLink = MainUrl
-            }, new Mock<IUrlMapper>().Object, loaderMock.Object);
+            }, new Mock<IUrlMapper>().Object, loaderMock.Object, CancellationToken.None);
 
             await Assert.ThrowsAsync<AggregateException>(
                     async () => await builder.Build().ConfigureAwait(false))
