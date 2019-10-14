@@ -5,11 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="README.txt" />
+    <None Remove="README.md" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="README.txt" />
+    <Content Include="README.md" />
   </ItemGroup>
 
   <ItemGroup>
