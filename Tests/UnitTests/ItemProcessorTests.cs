@@ -17,7 +17,8 @@ namespace Tests.UnitTests
             {
                 RootLink = MainUrl,
                 Depth = 1,
-                Mode = TraversalMode.SameHost
+                Mode = TraversalMode.SameHost,
+                DestinationFolder = "C:\\"
             };
         }
 
@@ -101,22 +102,29 @@ namespace Tests.UnitTests
         [Fact]
         public async Task ShouldLoadStaticContent()
         {
-            const string styleUrl = "http://site1.com/css/style.css";
-            const string mainContent = "<body><a href=\"css/style.css\"> </a></body>";
+            const string styleNormalizedUrl = "http://site1.com/css/style.css";
+            const string styleUrl = "css/style.css";
+            const string mainContent = "<body><a href=\"css/style.css\"></a></body>";
             const string styleContent = "some text";
+            const string stylePath = "style.css";
 
             var mocks = CreateMocksAndProcessor();
 
             mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
                 .ReturnsAsync(mainContent);
-            mocks.LoaderMock.Setup(x => x.LoadString(styleUrl))
+            mocks.LoaderMock.Setup(x => x.LoadString(styleNormalizedUrl))
                 .ReturnsAsync(styleContent);
+
+            mocks.UrlMapperMock.Setup(x => x.CreatePath(styleNormalizedUrl, It.IsAny<NodeType?>()))
+                .Returns(stylePath);
 
             await mocks.Processor.Run().ConfigureAwait(false);
 
-            mocks.WriterMock.Verify(m => m.Write(It.Is<Item>(i => i.Uri == MainUrl && i.Content == mainContent)),
+            mocks.WriterMock.Verify(
+                m => m.Write(
+                    It.Is<Item>(i => i.Uri == MainUrl && i.Content == mainContent.Replace(styleUrl, stylePath))),
                 Times.Once);
-            mocks.WriterMock.Verify(m => m.Write(It.Is<Item>(i => i.Uri == styleUrl && i.Content == styleContent)),
+            mocks.WriterMock.Verify(m => m.Write(It.Is<Item>(i => i.Uri == styleNormalizedUrl && i.Content == styleContent)),
                 Times.Once);
         }
 

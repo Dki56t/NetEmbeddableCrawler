@@ -93,9 +93,6 @@ namespace Crawler.Logic
                 return;
 
             var partialPart = UrlHelper.GetPartialUrl(uri);
-            if (!UrlHelper.IsExternalLink(link.Value) && type != NodeType.Html)
-                return;
-
             if (allowUrlMappingCreation)
             {
                 link.Value = $"{_urlMapper.CreatePath(uri, type)}{partialPart}";

@@ -11,9 +11,9 @@ namespace Service
             await CrawlHandler.Process(new Configuration
             {
                 RootLink = "http://html-agility-pack.net/",
-                Depth = 2,
+                Depth = 10,
                 DestinationFolder = "${TempPath}\\TestFileWrite",
-                Mode = TraversalMode.SameHostSnapshot
+                Mode = TraversalMode.SameHost
             }).ConfigureAwait(false);
         }
     }

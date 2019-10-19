@@ -44,6 +44,10 @@ namespace Crawler.Logic
                 return _map[normalizedUrl];
 
             var uri = new Uri(normalizedUrl);
+            var extension = Path.GetExtension(uri.LocalPath);
+            if (!string.IsNullOrWhiteSpace(uri.Query) && Constant.TxtFileExtensions.Contains(extension))
+                uri = new Uri(uri.AbsoluteUri.Remove(uri.AbsoluteUri.IndexOf(uri.Query,
+                    StringComparison.InvariantCultureIgnoreCase)));
 
             var hostUrl = UrlHelper.ExtractRoot(normalizedUrl);
             if (!_map.ContainsKey(hostUrl))
