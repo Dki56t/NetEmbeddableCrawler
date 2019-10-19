@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.IO;
 using System.Threading.Tasks;
+using Crawler.Projections;
 
 namespace Crawler.Logic
 {

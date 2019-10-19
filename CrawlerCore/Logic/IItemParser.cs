@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using Crawler.Projections;
 
 namespace Crawler.Logic
 {
-    // todo internal?
     public interface IItemParser
     {
-        (Item item, List<Item> deeperItems, WalkContext context) Parse(Item item, WalkContext context = null);
+        ParsingResult ParseAndUpdateContent(Item item, bool allowUrlMappingCreation, WalkContext context = null);
     }
 }

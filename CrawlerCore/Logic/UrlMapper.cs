@@ -71,6 +71,12 @@ namespace Crawler.Logic
             return _map[normalizedUrl];
         }
 
+        public string GetPath(string url)
+        {
+            var normalizedUrl = UrlHelper.NormalizeUrl(url);
+            return _map.ContainsKey(normalizedUrl) ? _map[normalizedUrl] : null;
+        }
+
         private static string GetFileNameOrDefault(string fileName, string query, NodeType? nodeType)
         {
             var normalizedFileName = NormalizeStringForHtmlAndFileSystem(fileName);

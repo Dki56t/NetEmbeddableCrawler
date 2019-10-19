@@ -1,4 +1,6 @@
-﻿namespace Crawler.Logic
+﻿using Crawler.Logic;
+
+namespace Crawler.Projections
 {
     /// <summary>
     ///     Represent an item (some element) of a web page.
@@ -20,12 +22,5 @@
         public string Content { get; set; }
         public string Uri { get; }
         public bool IsEmpty => (ByteContent == null || ByteContent.Length == 0) && string.IsNullOrWhiteSpace(Content);
-    }
-
-    public enum ItemType
-    {
-        Html,
-        Text,
-        Binary
     }
 }

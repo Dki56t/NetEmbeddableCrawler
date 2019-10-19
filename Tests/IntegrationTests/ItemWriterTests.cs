@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Crawler.Logic;
+using Crawler.Projections;
 using Moq;
 using Xunit;
 

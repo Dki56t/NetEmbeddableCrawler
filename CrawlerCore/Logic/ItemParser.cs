@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Crawler.Projections;
 using HtmlAgilityPack;
 
 namespace Crawler.Logic
@@ -16,10 +17,10 @@ namespace Crawler.Logic
             _fullTraversal = fullTraversal;
         }
 
-        public (Item item, List<Item> deeperItems, WalkContext context) Parse(Item item, WalkContext context = null)
+        public ParsingResult ParseAndUpdateContent(Item item, bool allowUrlMappingCreation, WalkContext context = null)
         {
             if (item.Type != ItemType.Html)
-                return (item, null, null);
+                return null;
 
             var doc = new HtmlDocument();
             doc.LoadHtml(item.Content);
@@ -42,11 +43,9 @@ namespace Crawler.Logic
                 // Check if crawling is allowed.
                 if (!CrawlingIsAllowed(item.Root, newRoot)) continue;
 
-                // If crawling should be done, replace url with path in the file system.
-                var partialPart = UrlHelper.GetPartialUrl(uri);
                 var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
-                if (UrlHelper.IsExternalLink(link.Value) || type == NodeType.Html)
-                    link.Value = $"{_urlMapper.CreatePath(uri, type)}{partialPart}";
+                // If crawling should be done, replace url with path in the file system.
+                UpdateLinkUrlIfNeeded(uri, link, type, allowUrlMappingCreation);
 
                 // Check if processing is necessary.
                 if (!context.TryRequestContentProcessing(uri))
@@ -58,7 +57,7 @@ namespace Crawler.Logic
             }
 
             item.Content = doc.DocumentNode.OuterHtml;
-            return (item, deeperItems, context);
+            return new ParsingResult(deeperItems, context);
         }
 
         private static IEnumerable<HtmlAttribute> PreprocessNodeAndGetLink(HtmlNode node, string root)
@@ -74,15 +73,33 @@ namespace Crawler.Logic
                     continue;
 
                 // Find all links.
-                if (Constant.LinkItems.Contains(attribute.Name)) 
+                if (Constant.LinkItems.Contains(attribute.Name))
                     links.Add(attribute);
 
                 // Remove cross-origin for correct work in chrome.
-                if (Constant.CrossOriginItems.Contains(attribute.Name)) 
+                if (Constant.CrossOriginItems.Contains(attribute.Name))
                     attribute.Remove();
             }
 
             return links;
+        }
+
+        private void UpdateLinkUrlIfNeeded(string uri, HtmlAttribute link, NodeType type, bool allowUrlMappingCreation)
+        {
+            var partialPart = UrlHelper.GetPartialUrl(uri);
+            if (!UrlHelper.IsExternalLink(link.Value) && type != NodeType.Html) 
+                return;
+
+            if (allowUrlMappingCreation)
+            {
+                link.Value = $"{_urlMapper.CreatePath(uri, type)}{partialPart}";
+            }
+            else
+            {
+                var path = _urlMapper.GetPath(uri);
+                if (!string.IsNullOrEmpty(path))
+                    link.Value = $"{path}{partialPart}";
+            }
         }
 
         private static string PrepareUri(string url, string root)

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Crawler;
 using Crawler.Logic;
+using Crawler.Projections;
 using Xunit;
 
 // ReSharper disable StringLiteralTypo - some urls are very specific
