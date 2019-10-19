@@ -29,7 +29,7 @@ namespace Crawler
 
             using var fileLoader = new FileLoader(token);
             var mapper = new UrlMapper(configuration);
-            var parser = new ItemParser(mapper, configuration.FullTraversal);
+            var parser = new ItemParser(mapper, configuration.Mode);
             var writer = new ItemWriter(mapper);
             var processor = new ItemProcessor(fileLoader, parser, writer, configuration, token);
 

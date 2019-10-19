@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 using Crawler;
+using Crawler.Projections;
 using Xunit;
 
 namespace Tests.IntegrationTests
@@ -15,7 +16,7 @@ namespace Tests.IntegrationTests
                 RootLink = "http://google.com/",
                 Depth = 1,
                 DestinationFolder = Path.Combine(Path.GetTempPath(), "TestFileWrite"),
-                FullTraversal = false
+                Mode = TraversalMode.SameHost
             }).ConfigureAwait(false);
         }
     }

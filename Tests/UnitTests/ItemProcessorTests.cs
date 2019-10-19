@@ -15,9 +15,9 @@ namespace Tests.UnitTests
         {
             _cfg = new Configuration
             {
-                RootLink = "http://site1.com",
-                Depth = 3,
-                FullTraversal = false
+                RootLink = MainUrl,
+                Depth = 1,
+                Mode = TraversalMode.SameHost
             };
         }
 
@@ -41,7 +41,7 @@ namespace Tests.UnitTests
                 UrlMapperMock = urlMapperMock,
                 WriterMock = writerMock,
                 Processor = new ItemProcessor(fileLoaderMock.Object,
-                    new ItemParser(urlMapperMock.Object, cfg.FullTraversal), writerMock.Object, cfg,
+                    new ItemParser(urlMapperMock.Object, cfg.Mode), writerMock.Object, cfg,
                     token ?? CancellationToken.None)
             };
         }
@@ -65,7 +65,7 @@ namespace Tests.UnitTests
             {
                 RootLink = MainUrl,
                 Depth = 1,
-                FullTraversal = fullTraversal
+                Mode = fullTraversal ? TraversalMode.AnyHost : TraversalMode.SameHost
             });
 
             mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
@@ -83,11 +83,7 @@ namespace Tests.UnitTests
         [Fact]
         public async Task ShouldIgnoreItemInCaseOfFailedLoadingOrWithUnsuccessfulResponseCode()
         {
-            var mocks = CreateMocksAndProcessor(new Configuration
-            {
-                RootLink = MainUrl,
-                Depth = 1
-            });
+            var mocks = CreateMocksAndProcessor();
 
             mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
@@ -103,38 +99,13 @@ namespace Tests.UnitTests
         }
 
         [Fact]
-        public async Task ShouldLoadSubUrls()
-        {
-            var mocks = CreateMocksAndProcessor(new Configuration
-            {
-                RootLink = MainUrl,
-                Depth = 1
-            });
-
-            mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
-                .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
-            mocks.LoaderMock.Setup(x => x.LoadString(SubUrl))
-                .ReturnsAsync("<body></body>");
-
-            await mocks.Processor.Run().ConfigureAwait(false);
-
-            mocks.LoaderMock.Verify(m => m.LoadString(MainUrl), Times.Once);
-            mocks.LoaderMock.Verify(m => m.LoadString(SubUrl), Times.Once);
-            mocks.WriterMock.Verify(m => m.Write(It.IsAny<Item>()), Times.Exactly(2));
-        }
-
-        [Fact]
-        public async Task ShouldLoadTextContent()
+        public async Task ShouldLoadStaticContent()
         {
             const string styleUrl = "http://site1.com/css/style.css";
             const string mainContent = "<body><a href=\"css/style.css\"> </a></body>";
             const string styleContent = "some text";
 
-            var mocks = CreateMocksAndProcessor(new Configuration
-            {
-                RootLink = MainUrl,
-                Depth = 1
-            });
+            var mocks = CreateMocksAndProcessor();
 
             mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
                 .ReturnsAsync(mainContent);
@@ -150,14 +121,27 @@ namespace Tests.UnitTests
         }
 
         [Fact]
+        public async Task ShouldLoadSubUrls()
+        {
+            var mocks = CreateMocksAndProcessor();
+
+            mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
+                .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
+            mocks.LoaderMock.Setup(x => x.LoadString(SubUrl))
+                .ReturnsAsync("<body></body>");
+
+            await mocks.Processor.Run().ConfigureAwait(false);
+
+            mocks.LoaderMock.Verify(m => m.LoadString(MainUrl), Times.Once);
+            mocks.LoaderMock.Verify(m => m.LoadString(SubUrl), Times.Once);
+            mocks.WriterMock.Verify(m => m.Write(It.IsAny<Item>()), Times.Exactly(2));
+        }
+
+        [Fact]
         public async Task ShouldLoadTooDeepUrlsIfTheyAreAccessibleFromHigherLevels()
         {
             const string deepUrl = "http://site1.com/too-deep-page";
-            var mocks = CreateMocksAndProcessor(new Configuration
-            {
-                RootLink = MainUrl,
-                Depth = 1
-            });
+            var mocks = CreateMocksAndProcessor();
 
             mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a>" +
@@ -178,11 +162,7 @@ namespace Tests.UnitTests
         [Fact]
         public async Task ShouldLoadUrlContentOnlyOnce()
         {
-            var mocks = CreateMocksAndProcessor(new Configuration
-            {
-                RootLink = MainUrl,
-                Depth = 1
-            });
+            var mocks = CreateMocksAndProcessor();
 
             mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
                 .ReturnsAsync("<body>" +
@@ -216,11 +196,7 @@ namespace Tests.UnitTests
                                  $"<a href=\"{MainUrl}\"> </a>" +
                                  "</body>";
 
-            var mocks = CreateMocksAndProcessor(new Configuration
-            {
-                RootLink = MainUrl,
-                Depth = 1
-            });
+            var mocks = CreateMocksAndProcessor();
 
             mocks.UrlMapperMock.Setup(m => m.CreatePath(MainUrl, It.IsAny<NodeType?>()))
                 .Returns(mainPath);
@@ -257,11 +233,7 @@ namespace Tests.UnitTests
             const string deepPath = "deep";
             const string deepContent = "<body></body>";
 
-            var mocks = CreateMocksAndProcessor(new Configuration
-            {
-                RootLink = MainUrl,
-                Depth = 1
-            });
+            var mocks = CreateMocksAndProcessor();
 
             var mainContent = $"<body><a href=\"{SubUrl}\"> </a><a href=\"{deepUrl}\"> </a></body>";
             var subContent = $"<body><a href=\"{deepUrl}\"> </a></body>";
@@ -294,14 +266,37 @@ namespace Tests.UnitTests
         }
 
         [Fact]
-        public async Task ShouldNotLoadTooDeepUrls()
+        public async Task ShouldNotChangeContentInSnapshotMode()
         {
-            const string deepUrl = "http://site1.com/too-deep-page";
             var mocks = CreateMocksAndProcessor(new Configuration
             {
                 RootLink = MainUrl,
-                Depth = 1
+                Depth = 1,
+                Mode = TraversalMode.SameHostSnapshot
             });
+
+            var mainContent = $"<body><a href=\"{SubUrl}\"></a></body>";
+            var subContent = "<body></body>";
+
+            mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
+                .ReturnsAsync(mainContent);
+            mocks.LoaderMock.Setup(x => x.LoadString(SubUrl))
+                .ReturnsAsync(subContent);
+
+            await mocks.Processor.Run().ConfigureAwait(false);
+
+            mocks.WriterMock.Verify(m => m.Write(It.IsAny<Item>()), Times.Exactly(2));
+            mocks.WriterMock.Verify(m => m.Write(It.Is<Item>(i => i.Content == mainContent && i.Uri == MainUrl)),
+                Times.Exactly(1));
+            mocks.WriterMock.Verify(m => m.Write(It.Is<Item>(i => i.Content == subContent && i.Uri == SubUrl)),
+                Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task ShouldNotLoadTooDeepUrls()
+        {
+            const string deepUrl = "http://site1.com/too-deep-page";
+            var mocks = CreateMocksAndProcessor();
 
             mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
@@ -326,11 +321,7 @@ namespace Tests.UnitTests
             const string subPath = "sub";
             const string deepPath = "deep";
 
-            var mocks = CreateMocksAndProcessor(new Configuration
-            {
-                RootLink = MainUrl,
-                Depth = 1
-            });
+            var mocks = CreateMocksAndProcessor();
 
             var mainContent = $"<body><a href=\"{SubUrl}\"> </a></body>";
             var subContent = $"<body><a href=\"{deepUrl}\"> </a></body>";
@@ -366,11 +357,7 @@ namespace Tests.UnitTests
             var content = $"<body><link rel=\"stylesheet\" href=\"https://cdn.min.css\"{crossOriginPart}></body>";
             var clearedContent = content.Replace(crossOriginPart, string.Empty);
 
-            var mocks = CreateMocksAndProcessor(new Configuration
-            {
-                RootLink = MainUrl,
-                Depth = 1
-            });
+            var mocks = CreateMocksAndProcessor();
 
             mocks.LoaderMock.Setup(x => x.LoadString(MainUrl)).ReturnsAsync(content);
 
@@ -385,11 +372,7 @@ namespace Tests.UnitTests
         public async Task ShouldThrowsIfCancellationRequested()
         {
             using var cts = new CancellationTokenSource();
-            var mocks = CreateMocksAndProcessor(new Configuration
-            {
-                RootLink = MainUrl,
-                Depth = 1
-            }, cts.Token);
+            var mocks = CreateMocksAndProcessor(null, cts.Token);
 
             mocks.LoaderMock.Setup(x => x.LoadString(MainUrl))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");

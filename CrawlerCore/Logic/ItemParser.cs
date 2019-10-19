@@ -8,13 +8,13 @@ namespace Crawler.Logic
 {
     internal sealed class ItemParser : IItemParser
     {
-        private readonly bool _fullTraversal;
+        private readonly TraversalMode _mode;
         private readonly IUrlMapper _urlMapper;
 
-        public ItemParser(IUrlMapper urlMapper, bool fullTraversal)
+        public ItemParser(IUrlMapper urlMapper, TraversalMode mode)
         {
             _urlMapper = urlMapper;
-            _fullTraversal = fullTraversal;
+            _mode = mode;
         }
 
         public ParsingResult ParseAndUpdateContent(Item item, bool allowUrlMappingCreation, WalkContext context = null)
@@ -60,7 +60,7 @@ namespace Crawler.Logic
             return new ParsingResult(deeperItems, context);
         }
 
-        private static IEnumerable<HtmlAttribute> PreprocessNodeAndGetLink(HtmlNode node, string root)
+        private IEnumerable<HtmlAttribute> PreprocessNodeAndGetLink(HtmlNode node, string root)
         {
             var links = new List<HtmlAttribute>();
 
@@ -77,8 +77,11 @@ namespace Crawler.Logic
                     links.Add(attribute);
 
                 // Remove cross-origin for correct work in chrome.
-                if (Constant.CrossOriginItems.Contains(attribute.Name))
+                if (_mode != TraversalMode.SameHostSnapshot &&
+                    Constant.CrossOriginItems.Contains(attribute.Name))
+                {
                     attribute.Remove();
+                }
             }
 
             return links;
@@ -86,8 +89,11 @@ namespace Crawler.Logic
 
         private void UpdateLinkUrlIfNeeded(string uri, HtmlAttribute link, NodeType type, bool allowUrlMappingCreation)
         {
+            if (_mode == TraversalMode.SameHostSnapshot)
+                return;
+
             var partialPart = UrlHelper.GetPartialUrl(uri);
-            if (!UrlHelper.IsExternalLink(link.Value) && type != NodeType.Html) 
+            if (!UrlHelper.IsExternalLink(link.Value) && type != NodeType.Html)
                 return;
 
             if (allowUrlMappingCreation)
@@ -112,7 +118,7 @@ namespace Crawler.Logic
 
         private bool CrawlingIsAllowed(string root, string newRoot)
         {
-            return _fullTraversal || UrlHelper.EqualHosts(root, newRoot);
+            return _mode == TraversalMode.AnyHost || UrlHelper.EqualHosts(root, newRoot);
         }
 
         private static ItemType? ConvertNodeTypeToItemType(NodeType type)

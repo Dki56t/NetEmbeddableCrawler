@@ -20,7 +20,7 @@ namespace Crawler.Logic
         public ItemProcessor(IFileLoader fileLoader, IItemParser parser, IItemWriter itemWriter,
             Configuration configuration, CancellationToken cancellationToken)
         {
-            if (configuration.Depth <= 0)
+            if (configuration.Depth < 0)
                 throw new InvalidOperationException($"Unexpected depth ({configuration.Depth})");
 
             _fileLoader = fileLoader;
@@ -125,7 +125,7 @@ namespace Crawler.Logic
                 if (allReleased)
                     break;
 
-                await Task.Delay(100, _cancellationToken).ConfigureAwait(false);
+                await Task.Delay(10, _cancellationToken).ConfigureAwait(false);
             }
 
             _depthDictionary.AddOrUpdate(newDepth, count, (key, value) => value + count);

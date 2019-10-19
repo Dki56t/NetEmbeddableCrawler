@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Crawler;
+using Crawler.Projections;
 
 namespace Service
 {
@@ -12,7 +13,7 @@ namespace Service
                 RootLink = "http://html-agility-pack.net/",
                 Depth = 2,
                 DestinationFolder = "${TempPath}\\TestFileWrite",
-                FullTraversal = true
+                Mode = TraversalMode.SameHostSnapshot
             }).ConfigureAwait(false);
         }
     }
