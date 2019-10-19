@@ -1,66 +1,31 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-
-namespace Crawler.Logic
+﻿namespace Crawler.Logic
 {
     /// <summary>
     ///     Represent an item (some element) of a web page.
     /// </summary>
-    internal class Item
+    public sealed class Item
     {
-        private Item _parent;
+        public Item(string uri) : this(uri, ItemType.Html, UrlHelper.ExtractRoot(uri)) { }
 
-        public Item(string content, string uri)
+        public Item(string uri, ItemType type, string root)
         {
-            Content = content;
             Uri = uri;
-            Items = new ConcurrentBag<Item>();
+            Type = type;
+            Root = root;
         }
 
-        public Item(byte[] content, string uri)
-        {
-            ByteContent = content;
-            Uri = uri;
-            Items = new ConcurrentBag<Item>();
-        }
-
-        private ConcurrentBag<Item> Items { get; }
-        public byte[] ByteContent { get; }
-        public string Content { get; private set; }
+        public ItemType Type { get; }
+        public string Root { get; }
+        public byte[] ByteContent { get; set; }
+        public string Content { get; set; }
         public string Uri { get; }
+        public bool IsEmpty => (ByteContent == null || ByteContent.Length == 0) && string.IsNullOrWhiteSpace(Content);
+    }
 
-        public void AddItem(Item item)
-        {
-            if (item._parent != null)
-                throw new InvalidOperationException("Item can have only one parent");
-
-            item._parent = this;
-            Items.Add(item);
-        }
-
-        public IReadOnlyCollection<Item> GetSubItems()
-        {
-            return Items.ToArray();
-        }
-
-        public Item GetRoot()
-        {
-            return GetRoot(this);
-        }
-
-        private static Item GetRoot(Item item)
-        {
-            while (true)
-            {
-                if (item._parent == null) return item;
-                item = item._parent;
-            }
-        }
-
-        public void UpdateContent(string content)
-        {
-            Content = content;
-        }
+    public enum ItemType
+    {
+        Html,
+        Text,
+        Binary
     }
 }

@@ -13,7 +13,7 @@ namespace Crawler.Logic
     /// <summary>
     ///     Use it to download file from the web
     /// </summary>
-    internal class FileLoader : IFileLoader
+    internal class FileLoader : IFileLoader, IDisposable
     {
         private readonly CancellationToken _token;
         private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
@@ -27,10 +27,15 @@ namespace Crawler.Logic
         };
 
         private readonly ConcurrentDictionary<string, byte> _processedUrls = new ConcurrentDictionary<string, byte>();
+        private readonly HttpClient _client;
+        private bool _disposed;
+        private SemaphoreSlim _semaphore;
 
         public FileLoader(CancellationToken token)
         {
             _token = token;
+            _client = new HttpClient();
+            _semaphore = new SemaphoreSlim(32);
         }
 
         public virtual async Task<byte[]> LoadBytes(string url)
@@ -58,6 +63,7 @@ namespace Crawler.Logic
 
             try
             {
+                await _semaphore.WaitAsync(_token).ConfigureAwait(false);
                 var response = await GetAsync(url).ConfigureAwait(false);
                 if (response == null) return null;
 
@@ -70,6 +76,10 @@ namespace Crawler.Logic
 
                 throw;
             }
+            finally
+            {
+                _semaphore.Release(1);
+            }
         }
 
         private async Task<HttpResponseMessage> GetAsync(string url)
@@ -77,8 +87,7 @@ namespace Crawler.Logic
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(_token);
             cts.CancelAfter(Timeout);
 
-            using var client = new HttpClient();
-            var message = await client.GetAsync(url, cts.Token).ConfigureAwait(false);
+            var message = await _client.GetAsync(url, cts.Token).ConfigureAwait(false);
             var numCode = (int) message.StatusCode;
             return numCode > 299 || numCode < 200 ? null : message;
         }
@@ -97,6 +106,15 @@ namespace Crawler.Logic
         {
             if (!_processedUrls.TryAdd(url, 0))
                 throw new InvalidOperationException($"Unnecessary content downloading from url: {url}");
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(FileLoader));
+
+            _client.Dispose();
+            _disposed = true;
         }
     }
 }

@@ -11,11 +11,11 @@ namespace Tests.UnitTests
         [Fact]
         public async Task ShouldThrowsIfCancellationRequested()
         {
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             var loader = new FileLoader(cts.Token);
 
             cts.Cancel();
-            await Assert.ThrowsAsync<OperationCanceledException>(() => loader.LoadBytes("http://some.com"))
+            await Assert.ThrowsAsync<OperationCanceledException>(() => loader.LoadString("http://some.com"))
                 .ConfigureAwait(false);
         }
     }

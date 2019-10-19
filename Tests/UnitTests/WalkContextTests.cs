@@ -16,15 +16,13 @@ namespace Tests.UnitTests
             doc.LoadHtml("<body>" +
                          $"<a href=\"{subUrl}\"> </a></body>");
 
-            var context = new WalkContext("http://s.com", doc.DocumentNode);
-            context.AddUrlIfMetFirstTime(subUrl, doc.DocumentNode);
-            context.AddUrlIfMetFirstTime(basicallySameSubUrl, doc.DocumentNode);
+            var context = new WalkContext("http://s.com");
 
-            Assert.True(context.TryRequestContentProcessing(subUrl, doc.DocumentNode),
+            Assert.True(context.TryRequestContentProcessing(subUrl),
                 "First request for content processing should be successful");
-            Assert.False(context.TryRequestContentProcessing(subUrl, doc.DocumentNode),
+            Assert.False(context.TryRequestContentProcessing(subUrl),
                 "Second request for content processing should be unsuccessful");
-            Assert.False(context.TryRequestContentProcessing(basicallySameSubUrl, doc.DocumentNode),
+            Assert.False(context.TryRequestContentProcessing(basicallySameSubUrl),
                 "First request for content processing (but with different scheme) should be unsuccessful");
         }
     }

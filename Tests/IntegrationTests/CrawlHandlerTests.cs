@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Tests.IntegrationTests
 {
-    public class ItemBuilderTests
+    public class CrawlHandlerTests
     {
         [Fact]
         public async Task ShouldCrawl()

@@ -137,7 +137,7 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldRecognizeHostName()
         {
-            var item1 = new Item("1", "http://site1/test/some");
+            var item1 = new Item("http://site1/test/some");
 
             var mapper = new UrlMapper(new Configuration
             {
@@ -168,7 +168,7 @@ namespace Tests.UnitTests
         public void ShouldReplaceLongFileNamePath()
         {
             var longUrl = $"http://url/{string.Join("", Enumerable.Range(0, 200))}.jpeg";
-            var item1 = new Item("1", longUrl);
+            var item1 = new Item(longUrl);
 
             var mapper = new UrlMapper(new Configuration
             {

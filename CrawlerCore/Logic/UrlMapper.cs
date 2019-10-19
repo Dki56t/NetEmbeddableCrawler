@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Crawler.Logic
 {
-    internal class UrlMapper : IUrlMapper
+    internal sealed class UrlMapper : IUrlMapper
     {
         private const string Index = "index.html";
         private const int MaxFileNameLength = 200;
@@ -17,7 +17,12 @@ namespace Crawler.Logic
             {'%', "_pr_"},
             {'&', "_am_"},
             {'/', "_sl_"},
-            {'|', "_ch_"}
+            {'|', "_ch_"},
+            {'*', "_st_"},
+            {':', "_dd_"},
+            {'"', "_q_"},
+            {'<', "_lt_"},
+            {'>', "_gt_"},
         };
 
         /// <summary>
@@ -32,7 +37,7 @@ namespace Crawler.Logic
             _outputDirectory = cfg.DestinationFolder;
         }
 
-        public virtual string CreatePath(string url, NodeType? nodeType = null)
+        public string CreatePath(string url, NodeType? nodeType = null)
         {
             var normalizedUrl = UrlHelper.NormalizeUrl(url);
             if (_map.ContainsKey(normalizedUrl))

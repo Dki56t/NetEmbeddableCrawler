@@ -27,12 +27,13 @@ namespace Crawler
                 configuration.DestinationFolder = configuration.DestinationFolder.Replace("${TempPath}", tmpPath);
             }
 
-            var loader = new FileLoader(token);
+            using var fileLoader = new FileLoader(token);
             var mapper = new UrlMapper(configuration);
-            var builder = new ItemBuilder(configuration, mapper, loader, token);
-            var root = await builder.Build().ConfigureAwait(false);
+            var parser = new ItemParser(mapper, configuration.FullTraversal);
+            var writer = new ItemWriter(mapper);
+            var processor = new ItemProcessor(fileLoader, parser, writer, configuration, token);
 
-            await ItemWriter.Write(root, mapper).ConfigureAwait(false);
+            await processor.Run().ConfigureAwait(false);
         }
     }
 }

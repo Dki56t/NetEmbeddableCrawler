@@ -30,16 +30,12 @@ namespace Tests.IntegrationTests
         }
 
         [Fact]
-        public async Task ShouldWriteItemsTreeToFileSystem()
+        public async Task ShouldWriteItemsToFileSystem()
         {
-            var item1 = new Item("1", "http://site1/index.html");
-            var item11 = new Item("1/internal", "http://site1/internal/internal.html");
-            item1.AddItem(item11);
-
-            var item2 = new Item("2", "http://site2/index.html");
-            var item21 = new Item("2/internal", "http://site2/other_internal/some.html");
-            item2.AddItem(item21);
-            item1.AddItem(item2);
+            var item1 = new Item("http://site1/index.html");
+            var item11 = new Item("http://site1/internal/internal.html");
+            var item2 = new Item("http://site2/index.html");
+            var item21 = new Item("http://site2/other_internal/some.html");
 
             var mapper = new Mock<IUrlMapper>();
             mapper.Setup(x => x.CreatePath(item1.Uri, null))
@@ -51,7 +47,12 @@ namespace Tests.IntegrationTests
             mapper.Setup(x => x.CreatePath(item21.Uri, null))
                 .Returns(Path.Combine(_testDirectoryPath, "site2\\other_internal\\some.html"));
 
-            await ItemWriter.Write(item1, mapper.Object).ConfigureAwait(false);
+            var writer = new ItemWriter(mapper.Object);
+            await writer.Write(item1).ConfigureAwait(false);
+            await writer.Write(item11).ConfigureAwait(false);
+            await writer.Write(item21).ConfigureAwait(false);
+            await writer.Write(item2).ConfigureAwait(false);
+
             var fileNames = new List<string>();
             FillAllFileNames(new DirectoryInfo(_testDirectoryPath), fileNames);
 

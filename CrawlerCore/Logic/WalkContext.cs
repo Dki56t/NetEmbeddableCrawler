@@ -1,48 +1,23 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using HtmlAgilityPack;
 
 namespace Crawler.Logic
 {
-    internal class WalkContext
+    public sealed class WalkContext
     {
-        private readonly ConcurrentDictionary<string, ProcessingNode> _processedUrls;
+        private readonly ConcurrentDictionary<string, byte> _processedUrls;
 
-        public WalkContext(string rootLink, HtmlNode documentNode)
+        public WalkContext(string rootLink)
         {
-            var rootProcessingNode = new ProcessingNode
-            {
-                Owner = documentNode,
-                ContentIsProcessed = true
-            };
-
-            _processedUrls = new ConcurrentDictionary<string, ProcessingNode>(new UriComparer());
-            if (!_processedUrls.TryAdd(rootLink, rootProcessingNode))
+            _processedUrls = new ConcurrentDictionary<string, byte>(new UriComparer());
+            if (!_processedUrls.TryAdd(rootLink, 0))
                 throw new InvalidOperationException("Invalid initialization of walking context");
         }
 
-        public void AddUrlIfMetFirstTime(string uri, HtmlNode owner)
+        public bool TryRequestContentProcessing(string uri)
         {
-            _processedUrls.TryAdd(uri, new ProcessingNode
-            {
-                Owner = owner
-            });
-        }
-
-        public bool TryRequestContentProcessing(string uri, HtmlNode owner)
-        {
-            if (_processedUrls[uri].Owner != owner || _processedUrls[uri].ContentIsProcessed)
-                return false;
-
-            _processedUrls[uri].ContentIsProcessed = true;
-            return true;
-        }
-
-        private class ProcessingNode
-        {
-            public HtmlNode Owner { get; set; }
-            public bool ContentIsProcessed { get; set; }
+            return _processedUrls.TryAdd(uri, 0);
         }
 
         private class UriComparer : IEqualityComparer<string>
