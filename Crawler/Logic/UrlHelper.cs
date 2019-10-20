@@ -2,7 +2,7 @@
 
 namespace Crawler.Logic
 {
-    public static class UrlHelper
+    internal static class UrlHelper
     {
         public static bool IsExternalLink(string url)
         {
@@ -22,7 +22,7 @@ namespace Crawler.Logic
             if (url.EndsWith("/"))
                 url = url.Remove(url.LastIndexOf("/", StringComparison.Ordinal));
 
-            return url;
+            return !Uri.TryCreate(url, UriKind.Absolute, out _) ? null : url;
         }
 
         public static string GetPartialUrl(string url)
@@ -31,9 +31,7 @@ namespace Crawler.Logic
             if (index > -1)
                 return url.Substring(index);
             index = url.LastIndexOf("#", StringComparison.Ordinal);
-            if (index > -1)
-                return url.Substring(index);
-            return string.Empty;
+            return index > -1 ? url.Substring(index) : string.Empty;
         }
 
         public static string ExtractRoot(string url)
@@ -44,13 +42,22 @@ namespace Crawler.Logic
 
         public static string BuildRelativeUri(string root, string relative)
         {
-            const string delimeter = "/";
+            const string delimiter = "/";
 
-            if (root.EndsWith(delimeter) && relative.StartsWith(delimeter))
-                root = root.Remove(root.LastIndexOf(delimeter, StringComparison.Ordinal));
-            if (root.EndsWith(delimeter) || relative.StartsWith(delimeter))
+            if (root.EndsWith(delimiter) && relative.StartsWith(delimiter))
+                root = root.Remove(root.LastIndexOf(delimiter, StringComparison.Ordinal));
+            if (root.EndsWith(delimiter) || relative.StartsWith(delimiter))
                 return $"{root}{relative}";
-            return $"{root}{delimeter}{relative}";
+            return $"{root}{delimiter}{relative}";
+        }
+
+        public static bool EqualHosts(string first, string second)
+        {
+            var newRootUri = new Uri(first);
+            var currentRootUri = new Uri(second);
+
+            return Uri.Compare(currentRootUri, newRootUri, UriComponents.Host, UriFormat.SafeUnescaped,
+                       StringComparison.InvariantCultureIgnoreCase) == 0;
         }
     }
 }

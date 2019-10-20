@@ -1,62 +1,48 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Crawler.Projections;
 
 namespace Crawler.Logic
 {
-    internal static class ItemWriter
+    internal sealed class ItemWriter : IItemWriter
     {
-        public static void Write(Item item, UrlMapper mapper)
-        {
-            var tasks = new List<Task>();
-            Write(item, mapper, tasks, new ConcurrentDictionary<string, byte>());
+        private readonly IUrlMapper _urlMapper;
+        private readonly ConcurrentDictionary<string, byte> _wroteFiles;
 
-            Task.WaitAll(tasks.ToArray());
+        public ItemWriter(IUrlMapper urlMapper)
+        {
+            _urlMapper = urlMapper;
+            _wroteFiles = new ConcurrentDictionary<string, byte>();
         }
 
-        private static void Write(Item item, UrlMapper mapper, List<Task> tasks,
-            ConcurrentDictionary<string, byte> pathes)
+        public async Task Write(Item item)
         {
-            var path = mapper.GetPath(item.Uri);
+            if (item.Content != null && item.ByteContent != null)
+                throw new InvalidOperationException(
+                    $"Ambiguity in Item content. Only one of them should be filled ({item.Uri}).");
+
+            var path = _urlMapper.CreatePath(item.Uri);
             var directoryPath = Path.GetDirectoryName(path);
             if (!Directory.Exists(Path.GetDirectoryName(path)))
                 Directory.CreateDirectory(directoryPath ?? throw new InvalidOperationException($"Invalid path {path}"));
 
+            if (!_wroteFiles.TryAdd(path, 0))
+                throw new InvalidOperationException("Duplicated paths writes");
+
             if (item.ByteContent != null)
-                tasks.Add(Task.Run(async () =>
-                {
-                    do
-                    {
-                        if (pathes.ContainsKey(path))
-                            throw new InvalidOperationException("Duplicated pathes writes");
-                    } while (!pathes.TryAdd(path, 1));
-
-                    using (var stream = File.Create(path))
-                    {
-                        await stream.WriteAsync(item.ByteContent, 0, item.ByteContent.Length);
-                        stream.Flush();
-                    }
-                }));
+            {
+                await using var stream = File.Create(path);
+                await stream.WriteAsync(item.ByteContent, 0, item.ByteContent.Length).ConfigureAwait(false);
+                await stream.FlushAsync().ConfigureAwait(false);
+            }
             else
-                tasks.Add(Task.Run(async () =>
-                {
-                    do
-                    {
-                        if (pathes.ContainsKey(path))
-                            throw new InvalidOperationException("Duplicated pathes writes");
-                    } while (!pathes.TryAdd(path, 1));
-
-                    using (var writer = File.CreateText(path))
-                    {
-                        await writer.WriteAsync(item.Content);
-                        writer.Flush();
-                    }
-                }));
-
-            foreach (var i in item.GetSubItems())
-                Write(i, mapper, tasks, pathes);
+            {
+                await using var writer = File.CreateText(path);
+                await writer.WriteAsync(item.Content).ConfigureAwait(false);
+                await writer.FlushAsync().ConfigureAwait(false);
+            }
         }
     }
 }

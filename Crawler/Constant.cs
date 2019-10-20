@@ -1,4 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Tests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace Crawler
 {
@@ -16,7 +20,8 @@ namespace Crawler
 
         public static HashSet<string> BinaryFileExtensions = new HashSet<string>
         {
-            ".jpeg"
+            ".jpeg",
+            ".zip"
         };
 
         public static HashSet<string> LinkItems = new HashSet<string>

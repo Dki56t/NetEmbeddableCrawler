@@ -1,91 +1,135 @@
 ﻿using System;
-using System.Net;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crawler.Logic
 {
     /// <summary>
-    ///     Use it to download file from the web
+    ///     Use it to download files from the web
     /// </summary>
-    internal class FileLoader
+    internal sealed class FileLoader : IFileLoader, IDisposable
     {
-        public virtual async Task<byte[]> LoadBytes(string url)
+        private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
+
+        private static readonly HashSet<Type> ListOfExceptionsItIsAllowedToSuppress = new HashSet<Type>
         {
+            typeof(TaskCanceledException),
+            typeof(AuthenticationException),
+            typeof(SocketException),
+            typeof(HttpRequestException)
+        };
+
+        private readonly HttpClient _client;
+
+        private readonly ConcurrentDictionary<string, Exception> _failedUrls =
+            new ConcurrentDictionary<string, Exception>();
+
+        private readonly ConcurrentDictionary<string, byte> _processedUrls = new ConcurrentDictionary<string, byte>();
+        private readonly SemaphoreSlim _semaphore;
+        private readonly CancellationToken _token;
+        private bool _disposed;
+
+        public FileLoader(CancellationToken token)
+        {
+            _token = token;
+            _client = new HttpClient();
+            _semaphore = new SemaphoreSlim(32);
+        }
+
+        public IDictionary<string, Exception> FailedUrls
+        {
+            get { return _failedUrls.ToDictionary(p => p.Key, p => p.Value); }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(FileLoader));
+
+            _client.Dispose();
+            _semaphore.Dispose();
+
+            _disposed = true;
+        }
+
+        public async Task<byte[]> LoadBytes(string url)
+        {
+            _token.ThrowIfCancellationRequested();
+
+            return await HandleAllowedExceptions(url,
+                    async content => await content.ReadAsByteArrayAsync().ConfigureAwait(false))
+                .ConfigureAwait(false);
+        }
+
+        public async Task<string> LoadString(string url)
+        {
+            _token.ThrowIfCancellationRequested();
+
+            return await HandleAllowedExceptions(url,
+                    async content => await content.ReadAsStringAsync().ConfigureAwait(false))
+                .ConfigureAwait(false);
+        }
+
+        private async Task<TResult> HandleAllowedExceptions<TResult>(string url,
+            Func<HttpContent, Task<TResult>> action)
+            where TResult : class
+        {
+            EnsureFirstLoading(url);
+
+            await _semaphore.WaitAsync(_token).ConfigureAwait(false);
+
             try
             {
-                using (var client = new HttpClient())
-                {
-                    return await (await client.GetAsync(url)).Content.ReadAsByteArrayAsync();
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                if (AllowSkipException(ex.InnerException as WebException))
-                    return null;
+                var response = await GetAsync(url).ConfigureAwait(false);
+                if (response == null) return null;
 
-                throw;
+                return await action(response.Content).ConfigureAwait(false);
             }
-            catch (WebException ex)
+            catch (Exception ex)
             {
-                if (AllowSkipException(ex))
-                    return null;
+                if (!AllowSkipException(ex))
+                    throw;
 
-                throw;
+                _failedUrls.TryAdd(url, ex);
+                return null;
+            }
+            finally
+            {
+                _semaphore.Release(1);
             }
         }
 
-        public virtual async Task<string> LoadString(string url)
+        private async Task<HttpResponseMessage> GetAsync(string url)
         {
-            try
-            {
-                using (var client = new HttpClient())
-                {
-                    return await (await client.GetAsync(url)).Content.ReadAsStringAsync();
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                if (AllowSkipException(ex.InnerException as WebException))
-                    return null;
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_token);
+            cts.CancelAfter(Timeout);
 
-                throw;
-            }
-            catch (WebException ex)
-            {
-                if (AllowSkipException(ex))
-                    return null;
-
-                throw;
-            }
+            var message = await _client.GetAsync(url, cts.Token).ConfigureAwait(false);
+            var numCode = (int) message.StatusCode;
+            return numCode > 299 || numCode < 200 ? null : message;
         }
 
-        private bool AllowSkipException(WebException exception)
+        private static bool AllowSkipException(Exception exception)
         {
-            var webResp = exception.Response as HttpWebResponse;
-            if (webResp != null && webResp.StatusCode == HttpStatusCode.Forbidden)
-                //access is forbidden
-                //we can log it and continue
-                return true;
-            if (webResp != null && webResp.StatusCode == HttpStatusCode.NotFound)
-                //broken link
-                //we can log it and continue
-                return true;
-            var ex = GetFirstException(exception);
-            return ex is SocketException socketException
-                   && (socketException.SocketErrorCode == SocketError.AccessDenied ||
-                       socketException.SocketErrorCode == SocketError.TimedOut || //www.linkedin.com
-                       socketException.SocketErrorCode == SocketError.ConnectionReset); //www.ru.linkedin.com
+            if (exception == null)
+                return false;
+
+            var type = exception.GetType();
+            return ListOfExceptionsItIsAllowedToSuppress.Contains(type) || AllowSkipException(exception.InnerException);
         }
 
-        private static Exception GetFirstException(Exception ex)
+        [Conditional("DEBUG")]
+        private void EnsureFirstLoading(string url)
         {
-            while (true)
-            {
-                if (ex.InnerException == null) return ex;
-                ex = ex.InnerException;
-            }
+            if (!_processedUrls.TryAdd(url, 0))
+                throw new InvalidOperationException($"Unnecessary content downloading from url: {url}");
         }
     }
 }
