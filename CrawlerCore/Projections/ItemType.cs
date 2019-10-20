@@ -1,6 +1,6 @@
 ﻿namespace Crawler.Projections
 {
-    public enum ItemType
+    internal enum ItemType
     {
         Html,
         Text,

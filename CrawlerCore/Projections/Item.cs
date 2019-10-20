@@ -5,9 +5,11 @@ namespace Crawler.Projections
     /// <summary>
     ///     Represent an item (some element) of a web page.
     /// </summary>
-    public sealed class Item
+    internal sealed class Item
     {
-        public Item(string uri) : this(uri, ItemType.Html, UrlHelper.ExtractRoot(uri)) { }
+        public Item(string uri) : this(uri, ItemType.Html, UrlHelper.ExtractRoot(uri))
+        {
+        }
 
         public Item(string uri, ItemType type, string root)
         {

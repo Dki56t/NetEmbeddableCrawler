@@ -57,7 +57,7 @@ namespace Crawler.Logic
             var currentRootUri = new Uri(second);
 
             return Uri.Compare(currentRootUri, newRootUri, UriComponents.Host, UriFormat.SafeUnescaped,
-                StringComparison.InvariantCultureIgnoreCase) == 0;
+                       StringComparison.InvariantCultureIgnoreCase) == 0;
         }
     }
 }

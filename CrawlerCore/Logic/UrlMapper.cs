@@ -22,7 +22,7 @@ namespace Crawler.Logic
             {':', "_dd_"},
             {'"', "_q_"},
             {'<', "_lt_"},
-            {'>', "_gt_"},
+            {'>', "_gt_"}
         };
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace Crawler.Logic
 
         public UrlMapper(Configuration cfg)
         {
-            _outputDirectory = cfg.DestinationFolder;
+            _outputDirectory = cfg.DestinationDirectory;
         }
 
         public string CreatePath(string url, NodeType? nodeType = null)
@@ -58,16 +58,16 @@ namespace Crawler.Logic
                 if (hostUrl == normalizedUrl)
                     return _map[normalizedUrl];
             }
-            
+
             var hostDirectoryPath = Path.GetDirectoryName(_map[hostUrl]);
-            
+
             // SubUrl it is a part of url between host name and last segment (if last segment is file name).
             var subUrl = GetDirectoryName(uri);
 
             // If subUrl is empty, it won't insert into link.
             if (subUrl == null || subUrl == "\\")
                 subUrl = string.Empty;
-            
+
             var fileName = GetFileName(uri);
             var filePath = $"{hostDirectoryPath}{subUrl}\\{GetFileNameOrDefault(fileName, uri.Query, nodeType)}";
 

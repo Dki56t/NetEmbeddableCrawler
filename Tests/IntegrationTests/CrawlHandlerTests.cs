@@ -15,7 +15,7 @@ namespace Tests.IntegrationTests
             {
                 RootLink = "http://google.com/",
                 Depth = 1,
-                DestinationFolder = Path.Combine(Path.GetTempPath(), "TestFileWrite"),
+                DestinationDirectory = Path.Combine(Path.GetTempPath(), "TestFileWrite"),
                 Mode = TraversalMode.SameHost
             }).ConfigureAwait(false);
         }

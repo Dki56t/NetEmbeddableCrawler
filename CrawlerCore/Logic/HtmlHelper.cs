@@ -16,9 +16,18 @@ namespace Crawler.Logic
                 return NodeType.Mail;
 
             var validUri = Uri.TryCreate(url, UriKind.Absolute, out var uri);
-            var ext = validUri
-                ? Path.GetExtension(uri.Segments.Last())
-                : Path.GetExtension(url);
+
+            string ext;
+            if (validUri)
+            {
+                if (uri.Segments.Length == 0)
+                    throw new InvalidOperationException($"Invalid url ({url})");
+                ext = Path.GetExtension(uri.Segments.Last());
+            }
+            else
+            {
+                ext = Path.GetExtension(url);
+            }
 
             if (Constant.TxtFileExtensions.Contains(ext))
                 return NodeType.Text;

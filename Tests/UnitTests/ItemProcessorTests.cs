@@ -18,7 +18,7 @@ namespace Tests.UnitTests
                 RootLink = MainUrl,
                 Depth = 1,
                 Mode = TraversalMode.SameHost,
-                DestinationFolder = "C:\\"
+                DestinationDirectory = "C:\\"
             };
         }
 
@@ -124,7 +124,8 @@ namespace Tests.UnitTests
                 m => m.Write(
                     It.Is<Item>(i => i.Uri == MainUrl && i.Content == mainContent.Replace(styleUrl, stylePath))),
                 Times.Once);
-            mocks.WriterMock.Verify(m => m.Write(It.Is<Item>(i => i.Uri == styleNormalizedUrl && i.Content == styleContent)),
+            mocks.WriterMock.Verify(
+                m => m.Write(It.Is<Item>(i => i.Uri == styleNormalizedUrl && i.Content == styleContent)),
                 Times.Once);
         }
 

@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Security.Authentication;
@@ -11,11 +12,10 @@ using System.Threading.Tasks;
 namespace Crawler.Logic
 {
     /// <summary>
-    ///     Use it to download file from the web
+    ///     Use it to download files from the web
     /// </summary>
-    internal class FileLoader : IFileLoader, IDisposable
+    internal sealed class FileLoader : IFileLoader, IDisposable
     {
-        private readonly CancellationToken _token;
         private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
 
         private static readonly HashSet<Type> ListOfExceptionsItIsAllowedToSuppress = new HashSet<Type>
@@ -26,10 +26,15 @@ namespace Crawler.Logic
             typeof(HttpRequestException)
         };
 
-        private readonly ConcurrentDictionary<string, byte> _processedUrls = new ConcurrentDictionary<string, byte>();
         private readonly HttpClient _client;
+
+        private readonly ConcurrentDictionary<string, Exception> _failedUrls =
+            new ConcurrentDictionary<string, Exception>();
+
+        private readonly ConcurrentDictionary<string, byte> _processedUrls = new ConcurrentDictionary<string, byte>();
+        private readonly SemaphoreSlim _semaphore;
+        private readonly CancellationToken _token;
         private bool _disposed;
-        private SemaphoreSlim _semaphore;
 
         public FileLoader(CancellationToken token)
         {
@@ -38,7 +43,23 @@ namespace Crawler.Logic
             _semaphore = new SemaphoreSlim(32);
         }
 
-        public virtual async Task<byte[]> LoadBytes(string url)
+        public IDictionary<string, Exception> FailedUrls
+        {
+            get { return _failedUrls.ToDictionary(p => p.Key, p => p.Value); }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(FileLoader));
+
+            _client.Dispose();
+            _semaphore.Dispose();
+
+            _disposed = true;
+        }
+
+        public async Task<byte[]> LoadBytes(string url)
         {
             _token.ThrowIfCancellationRequested();
 
@@ -47,7 +68,7 @@ namespace Crawler.Logic
                 .ConfigureAwait(false);
         }
 
-        public virtual async Task<string> LoadString(string url)
+        public async Task<string> LoadString(string url)
         {
             _token.ThrowIfCancellationRequested();
 
@@ -56,14 +77,16 @@ namespace Crawler.Logic
                 .ConfigureAwait(false);
         }
 
-        private async Task<TResult> HandleAllowedExceptions<TResult>(string url, Func<HttpContent, Task<TResult>> action)
+        private async Task<TResult> HandleAllowedExceptions<TResult>(string url,
+            Func<HttpContent, Task<TResult>> action)
             where TResult : class
         {
             EnsureFirstLoading(url);
 
+            await _semaphore.WaitAsync(_token).ConfigureAwait(false);
+
             try
             {
-                await _semaphore.WaitAsync(_token).ConfigureAwait(false);
                 var response = await GetAsync(url).ConfigureAwait(false);
                 if (response == null) return null;
 
@@ -71,10 +94,11 @@ namespace Crawler.Logic
             }
             catch (Exception ex)
             {
-                if (AllowSkipException(ex))
-                    return null;
+                if (!AllowSkipException(ex))
+                    throw;
 
-                throw;
+                _failedUrls.TryAdd(url, ex);
+                return null;
             }
             finally
             {
@@ -106,15 +130,6 @@ namespace Crawler.Logic
         {
             if (!_processedUrls.TryAdd(url, 0))
                 throw new InvalidOperationException($"Unnecessary content downloading from url: {url}");
-        }
-
-        public void Dispose()
-        {
-            if (_disposed)
-                throw new ObjectDisposedException(nameof(FileLoader));
-
-            _client.Dispose();
-            _disposed = true;
         }
     }
 }

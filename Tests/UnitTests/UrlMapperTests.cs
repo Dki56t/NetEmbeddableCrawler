@@ -24,7 +24,7 @@ namespace Tests.UnitTests
         {
             var mapper = new UrlMapper(new Configuration
             {
-                DestinationFolder = _testDirectoryPath
+                DestinationDirectory = _testDirectoryPath
             });
 
             Assert.Equal(Path.Combine(_testDirectoryPath,
@@ -73,7 +73,7 @@ namespace Tests.UnitTests
         {
             var mapper = new UrlMapper(new Configuration
             {
-                DestinationFolder = _testDirectoryPath
+                DestinationDirectory = _testDirectoryPath
             });
 
             Assert.Equal(Path.Combine(_testDirectoryPath, @"site1\index.html"),
@@ -91,7 +91,7 @@ namespace Tests.UnitTests
         {
             var mapper = new UrlMapper(new Configuration
             {
-                DestinationFolder = _testDirectoryPath
+                DestinationDirectory = _testDirectoryPath
             });
 
             Assert.Equal(Path.Combine(_testDirectoryPath, @"site4\index.html"),
@@ -105,7 +105,7 @@ namespace Tests.UnitTests
         {
             var mapper = new UrlMapper(new Configuration
             {
-                DestinationFolder = _testDirectoryPath
+                DestinationDirectory = _testDirectoryPath
             });
 
             Assert.Equal(Path.Combine(_testDirectoryPath, @"site1\index.html"),
@@ -126,7 +126,7 @@ namespace Tests.UnitTests
         {
             var mapper = new UrlMapper(new Configuration
             {
-                DestinationFolder = _testDirectoryPath
+                DestinationDirectory = _testDirectoryPath
             });
 
             Assert.Equal(Path.Combine(_testDirectoryPath, @"site3\index.html"),
@@ -136,13 +136,25 @@ namespace Tests.UnitTests
         }
 
         [Fact]
+        public void ShouldOmitQueryParametersInCssOrJsUrls()
+        {
+            var mapper = new UrlMapper(new Configuration
+            {
+                DestinationDirectory = _testDirectoryPath
+            });
+
+            Assert.Equal(Path.Combine(_testDirectoryPath, @"site1\min.css"),
+                mapper.CreatePath("http://site1/min.css?v=12345678"));
+        }
+
+        [Fact]
         public void ShouldRecognizeHostName()
         {
             var item1 = new Item("http://site1/test/some");
 
             var mapper = new UrlMapper(new Configuration
             {
-                DestinationFolder = _testDirectoryPath
+                DestinationDirectory = _testDirectoryPath
             });
             mapper.CreatePath(item1.Uri);
 
@@ -158,7 +170,7 @@ namespace Tests.UnitTests
             var longUrl = $"http://url/{string.Join("", Enumerable.Range(0, 200))}/img.jpeg";
             var mapper = new UrlMapper(new Configuration
             {
-                DestinationFolder = _testDirectoryPath
+                DestinationDirectory = _testDirectoryPath
             });
 
             Assert.Equal(_testDirectoryPath.Length + "url".Length + 2 * (@"\" + Guid.Empty).Length + ".jpeg".Length,
@@ -173,7 +185,7 @@ namespace Tests.UnitTests
 
             var mapper = new UrlMapper(new Configuration
             {
-                DestinationFolder = _testDirectoryPath
+                DestinationDirectory = _testDirectoryPath
             });
             mapper.CreatePath(item1.Uri);
 
@@ -187,23 +199,11 @@ namespace Tests.UnitTests
             var longUrl = $"http://url/?{string.Join("", Enumerable.Range(0, 200))}";
             var mapper = new UrlMapper(new Configuration
             {
-                DestinationFolder = _testDirectoryPath
+                DestinationDirectory = _testDirectoryPath
             });
 
             Assert.Equal(_testDirectoryPath.Length + @"url\_p_".Length + (@"\" + Guid.Empty).Length + ".html".Length,
                 mapper.CreatePath(longUrl).Length);
-        }
-
-        [Fact]
-        public void ShouldOmitQueryParametersInCssOrJsUrls()
-        {
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationFolder = _testDirectoryPath
-            });
-
-            Assert.Equal(Path.Combine(_testDirectoryPath, @"site1\min.css"),
-                mapper.CreatePath("http://site1/min.css?v=12345678"));
         }
     }
 }

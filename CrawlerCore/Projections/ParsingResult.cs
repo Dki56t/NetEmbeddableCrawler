@@ -4,7 +4,7 @@ using Crawler.Logic;
 
 namespace Crawler.Projections
 {
-    public sealed class ParsingResult
+    internal sealed class ParsingResult
     {
         public ParsingResult(IReadOnlyCollection<Item> deeperItems, WalkContext context)
         {

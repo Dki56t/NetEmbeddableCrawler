@@ -47,33 +47,43 @@ namespace Crawler.Logic
 
         private async Task Process(Item item, WalkContext context, int depth)
         {
-            _cancellationToken.ThrowIfCancellationRequested();
-
-            // Load.
-            await Task.Yield();
-            item = await Load(item).ConfigureAwait(false);
-
-            // TODO make a list of unloaded items?
-            if (item.IsEmpty)
-                return;
-
-            // ParseAndUpdateContent and update content.
-            await Task.Yield();
-            var parsingResult = ParseAndUpdateContent(item, depth == 0, context);
-
-            // Save.
-            await Task.Yield();
-            var tasks = new List<Task>
+            ParsingResult parsingResult;
+            List<Task> tasks;
+            try
             {
-                Save(item)
-            };
+                _cancellationToken.ThrowIfCancellationRequested();
 
-            ReleaseProcessBranch(depth);
+                // Load.
+                await Task.Yield();
+                item = await Load(item).ConfigureAwait(false);
+
+                if (item.IsEmpty)
+                    return;
+
+                // ParseAndUpdateContent and update content.
+                await Task.Yield();
+                parsingResult = ParseAndUpdateContent(item, depth == 0, context);
+
+                // Save.
+                await Task.Yield();
+                tasks = new List<Task>
+                {
+                    Save(item)
+                };
+            }
+            finally
+            {
+                ReleaseProcessBranch(depth);
+            }
 
             if (parsingResult?.DeeperItems != null && depth > 0)
             {
                 await WaitBeforeGoingDeeper(depth - 1, parsingResult.DeeperItems.Count).ConfigureAwait(false);
                 tasks.AddRange(parsingResult.DeeperItems.Select(u => Process(u, parsingResult.Context, depth - 1)));
+
+                // ReSharper disable once RedundantAssignment - clearing reference in async state machine to avoid
+                // memory leak.
+                parsingResult = null;
             }
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -111,8 +121,6 @@ namespace Crawler.Logic
         ///     It should not process deeper level before it load all urls from current.
         ///     Otherwise it would be impossible to get, whether a particular url accessible from
         ///     higher levels (and should be potentially mapped to file system) or not.
-        ///     Process will fail in case of unhandled exception so it is not necessary to wrap locking
-        ///     into try/finally block
         /// </summary>
         private async Task WaitBeforeGoingDeeper(int newDepth, int count)
         {

@@ -9,27 +9,26 @@ namespace Crawler.Logic
     internal sealed class ItemWriter : IItemWriter
     {
         private readonly IUrlMapper _urlMapper;
-        private readonly ConcurrentDictionary<string, Item> _wroteFiles;
+        private readonly ConcurrentDictionary<string, byte> _wroteFiles;
 
         public ItemWriter(IUrlMapper urlMapper)
         {
             _urlMapper = urlMapper;
-            _wroteFiles = new ConcurrentDictionary<string, Item>();
+            _wroteFiles = new ConcurrentDictionary<string, byte>();
         }
 
         public async Task Write(Item item)
         {
             if (item.Content != null && item.ByteContent != null)
-            {
-                throw new InvalidOperationException($"Ambiguity in Item content. Only one of them should be filled ({item.Uri}).");
-            }
+                throw new InvalidOperationException(
+                    $"Ambiguity in Item content. Only one of them should be filled ({item.Uri}).");
 
             var path = _urlMapper.CreatePath(item.Uri);
             var directoryPath = Path.GetDirectoryName(path);
             if (!Directory.Exists(Path.GetDirectoryName(path)))
                 Directory.CreateDirectory(directoryPath ?? throw new InvalidOperationException($"Invalid path {path}"));
 
-            if (!_wroteFiles.TryAdd(path, item))
+            if (!_wroteFiles.TryAdd(path, 0))
                 throw new InvalidOperationException("Duplicated paths writes");
 
             if (item.ByteContent != null)

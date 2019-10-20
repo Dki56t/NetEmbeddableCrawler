@@ -3,7 +3,7 @@ using Crawler.Projections;
 
 namespace Crawler.Logic
 {
-    public interface IItemWriter
+    internal interface IItemWriter
     {
         Task Write(Item item);
     }

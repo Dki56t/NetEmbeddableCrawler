@@ -36,7 +36,7 @@ namespace Crawler.Logic
             {
                 var uri = PrepareUri(link.Value, item.Root);
                 if (string.IsNullOrEmpty(uri))
-                    throw new InvalidOperationException("Invalid url can not be processed");
+                    throw new InvalidOperationException("Empty url can not be processed");
 
                 var newRoot = UrlHelper.ExtractRoot(uri);
 
@@ -79,9 +79,7 @@ namespace Crawler.Logic
                 // Remove cross-origin for correct work in chrome.
                 if (_mode != TraversalMode.SameHostSnapshot &&
                     Constant.CrossOriginItems.Contains(attribute.Name))
-                {
                     attribute.Remove();
-                }
             }
 
             return links;

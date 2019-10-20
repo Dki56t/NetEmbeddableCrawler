@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Crawler.Logic
 {
-    public sealed class WalkContext
+    internal sealed class WalkContext
     {
         private readonly ConcurrentDictionary<string, byte> _processedUrls;
 
