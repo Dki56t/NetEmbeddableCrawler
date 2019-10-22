@@ -11,7 +11,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public async Task ShouldCrawl()
         {
-            await CrawlHandler.Process(new Configuration
+            await CrawlHandler.ProcessAsync(new Configuration
             {
                 RootLink = "http://google.com/",
                 Depth = 1,

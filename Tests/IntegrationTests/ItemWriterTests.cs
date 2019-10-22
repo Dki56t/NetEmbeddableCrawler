@@ -49,10 +49,10 @@ namespace Tests.IntegrationTests
                 .Returns(Path.Combine(_testDirectoryPath, "site2\\other_internal\\some.html"));
 
             var writer = new ItemWriter(mapper.Object);
-            await writer.Write(item1).ConfigureAwait(false);
-            await writer.Write(item11).ConfigureAwait(false);
-            await writer.Write(item21).ConfigureAwait(false);
-            await writer.Write(item2).ConfigureAwait(false);
+            await writer.WriteAsync(item1).ConfigureAwait(false);
+            await writer.WriteAsync(item11).ConfigureAwait(false);
+            await writer.WriteAsync(item21).ConfigureAwait(false);
+            await writer.WriteAsync(item2).ConfigureAwait(false);
 
             var fileNames = new List<string>();
             FillAllFileNames(new DirectoryInfo(_testDirectoryPath), fileNames);

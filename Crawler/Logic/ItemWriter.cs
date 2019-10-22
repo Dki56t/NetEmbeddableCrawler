@@ -17,7 +17,7 @@ namespace Crawler.Logic
             _wroteFiles = new ConcurrentDictionary<string, byte>();
         }
 
-        public async Task Write(Item item)
+        public async Task WriteAsync(Item item)
         {
             if (item.Content != null && item.ByteContent != null)
                 throw new InvalidOperationException(

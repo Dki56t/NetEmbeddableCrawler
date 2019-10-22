@@ -12,7 +12,7 @@ namespace Service
         /// </summary>
         private static async Task Main()
         {
-            var result = await CrawlHandler.Process(new Configuration
+            var result = await CrawlHandler.ProcessAsync(new Configuration
             {
                 RootLink = "http://google.com/",
                 Depth = 2,

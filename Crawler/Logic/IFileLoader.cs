@@ -4,7 +4,7 @@ namespace Crawler.Logic
 {
     internal interface IFileLoader
     {
-        Task<byte[]> LoadBytes(string url);
-        Task<string> LoadString(string url);
+        Task<byte[]> LoadBytesAsync(string url);
+        Task<string> LoadStringAsync(string url);
     }
 }

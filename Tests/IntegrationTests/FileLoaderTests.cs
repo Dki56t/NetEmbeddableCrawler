@@ -11,7 +11,7 @@ namespace Tests.IntegrationTests
         public async Task ShouldSkipExceptions()
         {
             var loader = new FileLoader(CancellationToken.None);
-            await loader.LoadString("https://ru.linkedin.com").ConfigureAwait(false);
+            await loader.LoadStringAsync("https://ru.linkedin.com").ConfigureAwait(false);
         }
     }
 }

@@ -17,12 +17,12 @@ namespace Crawler
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
-        public static async Task<ProcessingResult> Process(Configuration configuration)
+        public static async Task<ProcessingResult> ProcessAsync(Configuration configuration)
         {
-            return await Process(configuration, CancellationToken.None).ConfigureAwait(false);
+            return await ProcessAsync(configuration, CancellationToken.None).ConfigureAwait(false);
         }
 
-        public static async Task<ProcessingResult> Process(Configuration configuration, CancellationToken token)
+        public static async Task<ProcessingResult> ProcessAsync(Configuration configuration, CancellationToken token)
         {
             if (!string.IsNullOrEmpty(configuration.DestinationDirectory))
             {
@@ -37,7 +37,7 @@ namespace Crawler
             var writer = new ItemWriter(mapper);
             var processor = new ItemProcessor(fileLoader, parser, writer, configuration, token);
 
-            await processor.Run().ConfigureAwait(false);
+            await processor.RunAsync().ConfigureAwait(false);
 
             return new ProcessingResult(fileLoader.FailedUrls);
         }

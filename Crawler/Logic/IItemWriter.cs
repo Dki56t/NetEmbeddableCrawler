@@ -5,6 +5,6 @@ namespace Crawler.Logic
 {
     internal interface IItemWriter
     {
-        Task Write(Item item);
+        Task WriteAsync(Item item);
     }
 }

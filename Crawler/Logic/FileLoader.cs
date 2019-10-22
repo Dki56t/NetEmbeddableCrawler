@@ -59,25 +59,25 @@ namespace Crawler.Logic
             _disposed = true;
         }
 
-        public async Task<byte[]> LoadBytes(string url)
+        public async Task<byte[]> LoadBytesAsync(string url)
         {
             _token.ThrowIfCancellationRequested();
 
-            return await HandleAllowedExceptions(url,
+            return await HandleAllowedExceptionsAsync(url,
                     async content => await content.ReadAsByteArrayAsync().ConfigureAwait(false))
                 .ConfigureAwait(false);
         }
 
-        public async Task<string> LoadString(string url)
+        public async Task<string> LoadStringAsync(string url)
         {
             _token.ThrowIfCancellationRequested();
 
-            return await HandleAllowedExceptions(url,
+            return await HandleAllowedExceptionsAsync(url,
                     async content => await content.ReadAsStringAsync().ConfigureAwait(false))
                 .ConfigureAwait(false);
         }
 
-        private async Task<TResult> HandleAllowedExceptions<TResult>(string url,
+        private async Task<TResult> HandleAllowedExceptionsAsync<TResult>(string url,
             Func<HttpContent, Task<TResult>> action)
             where TResult : class
         {
