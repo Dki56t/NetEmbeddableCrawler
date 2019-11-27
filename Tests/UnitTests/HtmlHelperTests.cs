@@ -1,4 +1,5 @@
 ﻿using Crawler.Logic;
+using Shouldly;
 using Xunit;
 
 namespace Tests.UnitTests
@@ -11,8 +12,8 @@ namespace Tests.UnitTests
             const string url = "https://subdomain.domain.com";
             const string urlJpeg = "https://subdomain.domain.com/picture.jpeg";
 
-            Assert.Equal(NodeType.Binary, HtmlHelper.ResolveType("a", urlJpeg));
-            Assert.Equal(NodeType.Binary, HtmlHelper.ResolveType("img", url));
+            HtmlHelper.ResolveType("img", url).ShouldBe(NodeType.Binary);
+            HtmlHelper.ResolveType("a", urlJpeg).ShouldBe(NodeType.Binary);
         }
 
         [Fact]
@@ -22,9 +23,9 @@ namespace Tests.UnitTests
             const string urlPartial = "https://subdomain.domain.com/#23";
             const string urlNumbers = "https://subdomain.domain.com/1.2.5";
 
-            Assert.Equal(NodeType.Html, HtmlHelper.ResolveType("a", url));
-            Assert.Equal(NodeType.Html, HtmlHelper.ResolveType("a", urlPartial));
-            Assert.Equal(NodeType.Html, HtmlHelper.ResolveType("a", urlNumbers));
+            HtmlHelper.ResolveType("a", url).ShouldBe(NodeType.Html);
+            HtmlHelper.ResolveType("a", urlPartial).ShouldBe(NodeType.Html);
+            HtmlHelper.ResolveType("a", urlNumbers).ShouldBe(NodeType.Html);
         }
 
         [Fact]
@@ -32,7 +33,7 @@ namespace Tests.UnitTests
         {
             const string urlSubPartial = "#23";
 
-            Assert.Equal(NodeType.Partial, HtmlHelper.ResolveType("a", urlSubPartial));
+            HtmlHelper.ResolveType("a", urlSubPartial).ShouldBe(NodeType.Partial);
         }
 
         [Fact]
@@ -41,8 +42,8 @@ namespace Tests.UnitTests
             const string urlText = "https://subdomain.domain.com/text.txt";
             const string urlCss = "css/site.css";
 
-            Assert.Equal(NodeType.Text, HtmlHelper.ResolveType("a", urlText));
-            Assert.Equal(NodeType.Text, HtmlHelper.ResolveType("a", urlCss));
+            HtmlHelper.ResolveType("a", urlText).ShouldBe(NodeType.Text);
+            HtmlHelper.ResolveType("a", urlCss).ShouldBe(NodeType.Text);
         }
     }
 }

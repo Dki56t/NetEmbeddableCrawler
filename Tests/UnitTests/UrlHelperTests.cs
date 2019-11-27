@@ -1,4 +1,5 @@
 ﻿using Crawler.Logic;
+using Shouldly;
 using Xunit;
 
 namespace Tests.UnitTests
@@ -8,57 +9,57 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldBuildRelativeUri()
         {
-            Assert.Equal("http://site.com/sub-page", UrlHelper.BuildRelativeUri("http://site.com", "sub-page"));
-            Assert.Equal("http://site.com/sub-page", UrlHelper.BuildRelativeUri("http://site.com/", "sub-page"));
-            Assert.Equal("http://site.com/sub-page", UrlHelper.BuildRelativeUri("http://site.com/", "/sub-page"));
+            UrlHelper.BuildRelativeUri("http://site.com", "sub-page").ShouldBe("http://site.com/sub-page");
+            UrlHelper.BuildRelativeUri("http://site.com/", "sub-page").ShouldBe("http://site.com/sub-page");
+            UrlHelper.BuildRelativeUri("http://site.com/", "/sub-page").ShouldBe("http://site.com/sub-page");
         }
 
         [Fact]
         public void ShouldDetermineEqualHosts()
         {
-            Assert.True(UrlHelper.EqualHosts("http://site.com", "http://site.com"));
-            Assert.True(UrlHelper.EqualHosts("http://SITE.com", "http://site.com"));
-            Assert.True(UrlHelper.EqualHosts("https://site.com", "http://site.com"));
-            Assert.True(UrlHelper.EqualHosts("https://site.com", "http://site.com/page"));
-            Assert.False(UrlHelper.EqualHosts("https://site1.com", "http://site.com"));
-            Assert.False(UrlHelper.EqualHosts("https://site.com", "http://site.net"));
+            UrlHelper.EqualHosts("http://site.com", "http://site.com").ShouldBeTrue();
+            UrlHelper.EqualHosts("http://SITE.com", "http://site.com").ShouldBeTrue();
+            UrlHelper.EqualHosts("https://site.com", "http://site.com").ShouldBeTrue();
+            UrlHelper.EqualHosts("https://site.com", "http://site.com/page").ShouldBeTrue();
+            UrlHelper.EqualHosts("https://site1.com", "http://site.com").ShouldBeFalse();
+            UrlHelper.EqualHosts("https://site.com", "http://site.net").ShouldBeFalse();
         }
 
         [Fact]
         public void ShouldDetermineIfItIsExternalLink()
         {
-            Assert.True(UrlHelper.IsExternalLink("http://site.com"));
-            Assert.True(UrlHelper.IsExternalLink("https://site.com"));
-            Assert.True(UrlHelper.IsExternalLink("//site.com"));
+            UrlHelper.IsExternalLink("http://site.com").ShouldBeTrue();
+            UrlHelper.IsExternalLink("https://site.com").ShouldBeTrue();
+            UrlHelper.IsExternalLink("//site.com").ShouldBeTrue();
         }
 
         [Fact]
         public void ShouldExtractRoot()
         {
-            Assert.Equal("http://site.com", UrlHelper.ExtractRoot("http://site.com"));
-            Assert.Equal("http://site.com", UrlHelper.ExtractRoot("http://site.com/sub-page"));
-            Assert.Equal("http://site.com", UrlHelper.ExtractRoot("http://site.com/sub-page/sub-sub-page"));
+            UrlHelper.ExtractRoot("http://site.com").ShouldBe("http://site.com");
+            UrlHelper.ExtractRoot("http://site.com/sub-page").ShouldBe("http://site.com");
+            UrlHelper.ExtractRoot("http://site.com/sub-page/sub-sub-page").ShouldBe("http://site.com");
         }
 
         [Fact]
         public void ShouldGetPartialUrl()
         {
-            Assert.Equal(UrlHelper.GetPartialUrl("http://site.com"), string.Empty);
-            Assert.Equal("/#", UrlHelper.GetPartialUrl("http://site.com/#"));
-            Assert.Equal("/#test", UrlHelper.GetPartialUrl("http://site.com/#test"));
-            Assert.Equal("#part", UrlHelper.GetPartialUrl("http://site.com/test#part"));
+            UrlHelper.GetPartialUrl("http://site.com").ShouldBe(string.Empty);
+            UrlHelper.GetPartialUrl("http://site.com/#").ShouldBe("/#");
+            UrlHelper.GetPartialUrl("http://site.com/#test").ShouldBe("/#test");
+            UrlHelper.GetPartialUrl("http://site.com/test#part").ShouldBe("#part");
         }
 
         [Fact]
         public void ShouldNormalizeUrl()
         {
-            Assert.Equal("http://site.com", UrlHelper.NormalizeUrl("http://site.com"));
-            Assert.Equal("http://site.com", UrlHelper.NormalizeUrl("http://site.com/#"));
-            Assert.Equal("http://site.com", UrlHelper.NormalizeUrl("http://site.com/#test"));
-            Assert.Equal("https://site.com", UrlHelper.NormalizeUrl("//site.com"));
-            Assert.Equal("https://site.com", UrlHelper.NormalizeUrl("https://site.com/"));
-            Assert.Null(UrlHelper.NormalizeUrl("//"));
-            Assert.Null(UrlHelper.NormalizeUrl(";"));
+            UrlHelper.NormalizeUrl("http://site.com").ShouldBe("http://site.com");
+            UrlHelper.NormalizeUrl("http://site.com/#").ShouldBe("http://site.com");
+            UrlHelper.NormalizeUrl("http://site.com/#test").ShouldBe("http://site.com");
+            UrlHelper.NormalizeUrl("//site.com").ShouldBe("https://site.com");
+            UrlHelper.NormalizeUrl("https://site.com/").ShouldBe("https://site.com");
+            UrlHelper.NormalizeUrl("//").ShouldBeNull();
+            UrlHelper.NormalizeUrl(";").ShouldBeNull();
         }
     }
 }

@@ -5,6 +5,7 @@ using Crawler;
 using Crawler.Logic;
 using Crawler.Projections;
 using Moq;
+using Shouldly;
 using Xunit;
 
 namespace Tests.UnitTests
@@ -227,9 +228,11 @@ namespace Tests.UnitTests
             var modifiedSubPage = subPageContent.Replace(SubUrl, subPath).Replace(MainUrl, mainPath);
 
             mocks.WriterMock.Verify(m => m.WriteAsync(It.IsAny<Item>()), Times.Exactly(2));
-            mocks.WriterMock.Verify(m => m.WriteAsync(It.Is<Item>(i => i.Content == modifiedMainPage && i.Uri == MainUrl)),
+            mocks.WriterMock.Verify(
+                m => m.WriteAsync(It.Is<Item>(i => i.Content == modifiedMainPage && i.Uri == MainUrl)),
                 Times.Once);
-            mocks.WriterMock.Verify(m => m.WriteAsync(It.Is<Item>(i => i.Content == modifiedSubPage && i.Uri == SubUrl)),
+            mocks.WriterMock.Verify(
+                m => m.WriteAsync(It.Is<Item>(i => i.Content == modifiedSubPage && i.Uri == SubUrl)),
                 Times.Once);
         }
 
@@ -269,7 +272,8 @@ namespace Tests.UnitTests
                 l => l.WriteAsync(It.Is<Item>(i =>
                     i.Content == mainContent.Replace(SubUrl, subPath).Replace(deepUrl, deepPath))),
                 Times.Once);
-            mocks.WriterMock.Verify(l => l.WriteAsync(It.Is<Item>(i => i.Content == subContent.Replace(deepUrl, deepPath))),
+            mocks.WriterMock.Verify(
+                l => l.WriteAsync(It.Is<Item>(i => i.Content == subContent.Replace(deepUrl, deepPath))),
                 Times.Once);
             mocks.WriterMock.Verify(l => l.WriteAsync(It.Is<Item>(i => i.Content == deepContent)), Times.Once);
         }
@@ -349,9 +353,11 @@ namespace Tests.UnitTests
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
             mocks.WriterMock.Verify(l => l.WriteAsync(It.IsAny<Item>()), Times.Exactly(2));
-            mocks.WriterMock.Verify(l => l.WriteAsync(It.Is<Item>(i => i.Content == mainContent.Replace(SubUrl, subPath))),
+            mocks.WriterMock.Verify(
+                l => l.WriteAsync(It.Is<Item>(i => i.Content == mainContent.Replace(SubUrl, subPath))),
                 Times.Once);
-            mocks.WriterMock.Verify(l => l.WriteAsync(It.Is<Item>(i => i.Content == subContent.Replace(deepUrl, deepPath))),
+            mocks.WriterMock.Verify(
+                l => l.WriteAsync(It.Is<Item>(i => i.Content == subContent.Replace(deepUrl, deepPath))),
                 Times.Never);
             mocks.WriterMock.Verify(l => l.WriteAsync(It.Is<Item>(i => i.Content == subContent)), Times.Once);
         }
@@ -373,7 +379,8 @@ namespace Tests.UnitTests
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
             mocks.WriterMock.Verify(w => w.WriteAsync(It.IsAny<Item>()), Times.Once);
-            mocks.WriterMock.Verify(w => w.WriteAsync(It.Is<Item>(i => i.Uri == MainUrl && i.Content == clearedContent)),
+            mocks.WriterMock.Verify(
+                w => w.WriteAsync(It.Is<Item>(i => i.Uri == MainUrl && i.Content == clearedContent)),
                 Times.Once);
         }
 
@@ -404,7 +411,7 @@ namespace Tests.UnitTests
                 Depth = 1
             });
 
-            await Assert.ThrowsAsync<InvalidOperationException>(
+            await Should.ThrowAsync<InvalidOperationException>(
                     async () => await mocks.Processor.RunAsync().ConfigureAwait(false))
                 .ConfigureAwait(false);
         }
@@ -423,7 +430,7 @@ namespace Tests.UnitTests
             mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
                 .ThrowsAsync(new InvalidOperationException());
 
-            await Assert.ThrowsAsync<InvalidOperationException>(
+            await Should.ThrowAsync<InvalidOperationException>(
                     async () => await mocks.Processor.RunAsync().ConfigureAwait(false))
                 .ConfigureAwait(false);
         }

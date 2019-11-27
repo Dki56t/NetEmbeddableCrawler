@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Crawler.Logic;
 using Crawler.Projections;
 using Moq;
+using Shouldly;
 using Xunit;
 
 namespace Tests.IntegrationTests
@@ -57,16 +58,16 @@ namespace Tests.IntegrationTests
             var fileNames = new List<string>();
             FillAllFileNames(new DirectoryInfo(_testDirectoryPath), fileNames);
 
-            Assert.Equal(9, fileNames.Count);
-            Assert.Contains(_testDirectoryPath, fileNames);
-            Assert.Contains(Path.Combine(_testDirectoryPath, "site1"), fileNames);
-            Assert.Contains(Path.Combine(_testDirectoryPath, "site1\\index.html"), fileNames);
-            Assert.Contains(Path.Combine(_testDirectoryPath, "site1\\internal"), fileNames);
-            Assert.Contains(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html"), fileNames);
-            Assert.Contains(Path.Combine(_testDirectoryPath, "site2"), fileNames);
-            Assert.Contains(Path.Combine(_testDirectoryPath, "site2\\index.html"), fileNames);
-            Assert.Contains(Path.Combine(_testDirectoryPath, "site2\\other_internal"), fileNames);
-            Assert.Contains(Path.Combine(_testDirectoryPath, "site2\\other_internal\\some.html"), fileNames);
+            fileNames.Count.ShouldBe(9);
+            fileNames.ShouldContain(_testDirectoryPath);
+            fileNames.ShouldContain(Path.Combine(_testDirectoryPath, "site1"));
+            fileNames.ShouldContain(Path.Combine(_testDirectoryPath, "site1\\index.html"));
+            fileNames.ShouldContain(Path.Combine(_testDirectoryPath, "site1\\internal"));
+            fileNames.ShouldContain(Path.Combine(_testDirectoryPath, "site1\\internal\\internal.html"));
+            fileNames.ShouldContain(Path.Combine(_testDirectoryPath, "site2"));
+            fileNames.ShouldContain(Path.Combine(_testDirectoryPath, "site2\\index.html"));
+            fileNames.ShouldContain(Path.Combine(_testDirectoryPath, "site2\\other_internal"));
+            fileNames.ShouldContain(Path.Combine(_testDirectoryPath, "site2\\other_internal\\some.html"));
         }
     }
 }
