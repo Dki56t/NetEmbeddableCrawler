@@ -19,14 +19,12 @@ namespace Tests.UnitTests
         }
 
         private readonly string _testDirectoryPath;
+        private const string MainUrl = "http://site1.com";
 
         [Fact]
-        public void RMapUrlWithParameters()
+        public void ShouldMapUrlWithParameters()
         {
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationDirectory = _testDirectoryPath
-            });
+            var mapper = new UrlMapper(new Configuration(MainUrl, _testDirectoryPath));
 
             mapper.CreatePath("http://site1/|")
                 .ShouldBe(Path.Combine(_testDirectoryPath, @"site1\_ch_.html"));
@@ -56,10 +54,7 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldAppendExtensionToFileName()
         {
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationDirectory = _testDirectoryPath
-            });
+            var mapper = new UrlMapper(new Configuration(MainUrl, _testDirectoryPath));
 
             mapper.CreatePath("http://site1/")
                 .ShouldBe(Path.Combine(_testDirectoryPath, @"site1\index.html"));
@@ -74,10 +69,7 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldMapPartialUri()
         {
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationDirectory = _testDirectoryPath
-            });
+            var mapper = new UrlMapper(new Configuration(MainUrl, _testDirectoryPath));
 
             mapper.CreatePath("http://site4/#")
                 .ShouldBe(Path.Combine(_testDirectoryPath, @"site4\index.html"));
@@ -88,10 +80,7 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldMapRelativeUri()
         {
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationDirectory = _testDirectoryPath
-            });
+            var mapper = new UrlMapper(new Configuration(MainUrl, _testDirectoryPath));
 
             mapper.CreatePath("http://site1/index.html")
                 .ShouldBe(Path.Combine(_testDirectoryPath, @"site1\index.html"));
@@ -106,10 +95,7 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldMapUriWithoutDirectNestedDirectory()
         {
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationDirectory = _testDirectoryPath
-            });
+            var mapper = new UrlMapper(new Configuration(MainUrl, _testDirectoryPath));
 
             mapper.CreatePath("http://site3/")
                 .ShouldBe(Path.Combine(_testDirectoryPath, @"site3\index.html"));
@@ -120,10 +106,7 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldOmitQueryParametersInCssOrJsUrls()
         {
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationDirectory = _testDirectoryPath
-            });
+            var mapper = new UrlMapper(new Configuration(MainUrl, _testDirectoryPath));
 
             mapper.CreatePath("http://site1/min.css?v=12345678")
                 .ShouldBe(Path.Combine(_testDirectoryPath, @"site1\min.css"));
@@ -134,10 +117,7 @@ namespace Tests.UnitTests
         {
             var item1 = new Item("http://site1/test/some");
 
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationDirectory = _testDirectoryPath
-            });
+            var mapper = new UrlMapper(new Configuration(MainUrl, _testDirectoryPath));
             mapper.CreatePath(item1.Uri);
 
             mapper.CreatePath("http://site1/test/some")
@@ -150,12 +130,9 @@ namespace Tests.UnitTests
         public void ShouldReplaceLongDirectoryNamePath()
         {
             var longUrl = $"http://url/{string.Join("", Enumerable.Range(0, 200))}/img.jpeg";
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationDirectory = _testDirectoryPath
-            });
+            var mapper = new UrlMapper(new Configuration(MainUrl, _testDirectoryPath));
 
-            mapper.CreatePath(longUrl).Length
+            mapper.CreatePath(longUrl)?.Length
                 .ShouldBe(_testDirectoryPath.Length + "url".Length + 2 * (@"\" + Guid.Empty).Length + ".jpeg".Length);
         }
 
@@ -165,13 +142,10 @@ namespace Tests.UnitTests
             var longUrl = $"http://url/{string.Join("", Enumerable.Range(0, 200))}.jpeg";
             var item1 = new Item(longUrl);
 
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationDirectory = _testDirectoryPath
-            });
+            var mapper = new UrlMapper(new Configuration(MainUrl, _testDirectoryPath));
             mapper.CreatePath(item1.Uri);
 
-            mapper.CreatePath(longUrl).Length
+            mapper.CreatePath(longUrl)?.Length
                 .ShouldBe(_testDirectoryPath.Length + "url".Length + 2 * (@"\" + Guid.Empty).Length + ".jpeg".Length);
         }
 
@@ -179,12 +153,9 @@ namespace Tests.UnitTests
         public void ShouldReplaceLongQueryPath()
         {
             var longUrl = $"http://url/?{string.Join("", Enumerable.Range(0, 200))}";
-            var mapper = new UrlMapper(new Configuration
-            {
-                DestinationDirectory = _testDirectoryPath
-            });
+            var mapper = new UrlMapper(new Configuration(MainUrl, _testDirectoryPath));
 
-            mapper.CreatePath(longUrl).Length
+            mapper.CreatePath(longUrl)?.Length
                 .ShouldBe(_testDirectoryPath.Length + @"url\_p_".Length + (@"\" + Guid.Empty).Length + ".html".Length);
         }
     }

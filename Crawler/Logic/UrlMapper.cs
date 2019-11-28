@@ -37,9 +37,12 @@ namespace Crawler.Logic
             _outputDirectory = cfg.DestinationDirectory;
         }
 
-        public string CreatePath(string url, NodeType? nodeType = null)
+        public string? CreatePath(string url, NodeType? nodeType = null)
         {
             var normalizedUrl = UrlHelper.NormalizeUrl(url);
+            if (string.IsNullOrEmpty(normalizedUrl))
+                return null;
+
             if (_map.ContainsKey(normalizedUrl))
                 return _map[normalizedUrl];
 
@@ -75,9 +78,12 @@ namespace Crawler.Logic
             return _map[normalizedUrl];
         }
 
-        public string GetPath(string url)
+        public string? GetPath(string url)
         {
             var normalizedUrl = UrlHelper.NormalizeUrl(url);
+            if (string.IsNullOrEmpty(normalizedUrl))
+                return null;
+
             return _map.ContainsKey(normalizedUrl) ? _map[normalizedUrl] : null;
         }
 
@@ -110,7 +116,7 @@ namespace Crawler.Logic
         /// <returns>String with replaced prohibit characters.</returns>
         private static string NormalizeStringForHtmlAndFileSystem(string str)
         {
-            StringBuilder result = null;
+            StringBuilder? result = null;
 
             for (var i = 0; i < str.Length; i++)
                 if (ProhibitCharacters.ContainsKey(str[i]))
@@ -135,7 +141,7 @@ namespace Crawler.Logic
             return fileName;
         }
 
-        private static string GetDirectoryName(Uri uri)
+        private static string? GetDirectoryName(Uri uri)
         {
             var directoryName = uri.LocalPath.Length > MaxFileNameLength
                 ? Guid.NewGuid().ToString()

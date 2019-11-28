@@ -14,21 +14,20 @@ namespace Tests.UnitTests
     {
         public ItemProcessorTests()
         {
-            _cfg = new Configuration
+            _cfg = new Configuration(MainUrl, Path)
             {
-                RootLink = MainUrl,
                 Depth = 1,
-                Mode = TraversalMode.SameHost,
-                DestinationDirectory = "C:\\"
+                Mode = TraversalMode.SameHost
             };
         }
 
         private const string MainUrl = "http://site1.com";
+        private const string Path = "C:\\";
         private const string SubUrl = "http://site1.com/sub-page";
 
         private readonly Configuration _cfg;
 
-        private ProcessorTestContainer CreateMocksAndProcessor(Configuration cfg = null,
+        private ProcessorTestContainer CreateMocksAndProcessor(Configuration? cfg = null,
             CancellationToken? token = null)
         {
             cfg ??= _cfg;
@@ -37,24 +36,26 @@ namespace Tests.UnitTests
             var urlMapperMock = new Mock<IUrlMapper>();
             var writerMock = new Mock<IItemWriter>();
 
-            return new ProcessorTestContainer
-            {
-                LoaderMock = fileLoaderMock,
-                UrlMapperMock = urlMapperMock,
-                WriterMock = writerMock,
-                Processor = new ItemProcessor(fileLoaderMock.Object,
-                    new ItemParser(urlMapperMock.Object, cfg.Mode), writerMock.Object, cfg,
-                    token ?? CancellationToken.None)
-            };
+            return new ProcessorTestContainer(fileLoaderMock, urlMapperMock, writerMock,
+                new ItemProcessor(fileLoaderMock.Object, new ItemParser(urlMapperMock.Object, cfg.Mode),
+                    writerMock.Object, cfg, token ?? CancellationToken.None));
         }
 
         private class ProcessorTestContainer
         {
-            public Mock<IFileLoader> LoaderMock { get; set; }
-            public Mock<IUrlMapper> UrlMapperMock { get; set; }
-            public Mock<IItemWriter> WriterMock { get; set; }
+            public ProcessorTestContainer(Mock<IFileLoader> loaderMock, Mock<IUrlMapper> urlMapperMock,
+                Mock<IItemWriter> writerMock, ItemProcessor processor)
+            {
+                LoaderMock = loaderMock;
+                UrlMapperMock = urlMapperMock;
+                WriterMock = writerMock;
+                Processor = processor;
+            }
 
-            public ItemProcessor Processor { get; set; }
+            public Mock<IFileLoader> LoaderMock { get; }
+            public Mock<IUrlMapper> UrlMapperMock { get; }
+            public Mock<IItemWriter> WriterMock { get; }
+            public ItemProcessor Processor { get; }
         }
 
         [Theory]
@@ -63,9 +64,8 @@ namespace Tests.UnitTests
         public async Task ShouldLoadUrlsFromDifferentDomainsDependingOnConfiguration(bool fullTraversal)
         {
             const string subUrl = "http://site2.com";
-            var mocks = CreateMocksAndProcessor(new Configuration
+            var mocks = CreateMocksAndProcessor(new Configuration(MainUrl, Path)
             {
-                RootLink = MainUrl,
                 Depth = 1,
                 Mode = fullTraversal ? TraversalMode.AnyHost : TraversalMode.SameHost
             });
@@ -90,7 +90,7 @@ namespace Tests.UnitTests
             mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
             mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
-                .ReturnsAsync((string) null);
+                .ReturnsAsync((string?) null);
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
@@ -281,9 +281,8 @@ namespace Tests.UnitTests
         [Fact]
         public async Task ShouldNotChangeContentInSnapshotMode()
         {
-            var mocks = CreateMocksAndProcessor(new Configuration
+            var mocks = CreateMocksAndProcessor(new Configuration(MainUrl, Path)
             {
-                RootLink = MainUrl,
                 Depth = 1,
                 Mode = TraversalMode.SameHostSnapshot
             });
@@ -405,9 +404,8 @@ namespace Tests.UnitTests
         [Fact]
         public async Task ShouldThrowsIfRootLinkIsInvalid()
         {
-            var mocks = CreateMocksAndProcessor(new Configuration
+            var mocks = CreateMocksAndProcessor(new Configuration("//", Path)
             {
-                RootLink = "//",
                 Depth = 1
             });
 
@@ -419,9 +417,8 @@ namespace Tests.UnitTests
         [Fact]
         public async Task ShouldThrowsIfUnhandledExceptionThrown()
         {
-            var mocks = CreateMocksAndProcessor(new Configuration
+            var mocks = CreateMocksAndProcessor(new Configuration("//", Path)
             {
-                RootLink = "//",
                 Depth = 1
             });
 

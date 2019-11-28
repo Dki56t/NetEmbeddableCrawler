@@ -45,9 +45,9 @@ namespace Crawler.Logic
             await ProcessAsync(item, null, _configuration.Depth).ConfigureAwait(false);
         }
 
-        private async Task ProcessAsync(Item item, WalkContext context, int depth)
+        private async Task ProcessAsync(Item item, WalkContext? context, int depth)
         {
-            ParsingResult parsingResult;
+            ParsingResult? parsingResult;
             List<Task> tasks;
             try
             {
@@ -107,7 +107,7 @@ namespace Crawler.Logic
             }
         }
 
-        private ParsingResult ParseAndUpdateContent(Item item, bool leaf, WalkContext context)
+        private ParsingResult? ParseAndUpdateContent(Item item, bool leaf, WalkContext? context)
         {
             return _parser.ParseAndUpdateContent(item, !leaf, context);
         }

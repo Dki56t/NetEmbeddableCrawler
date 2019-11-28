@@ -12,13 +12,12 @@ namespace Service
         /// </summary>
         private static async Task Main()
         {
-            var result = await CrawlHandler.ProcessAsync(new Configuration
-            {
-                RootLink = "http://google.com/",
-                Depth = 2,
-                DestinationDirectory = "${TempPath}\\TestFileWrite",
-                Mode = TraversalMode.AnyHost
-            }).ConfigureAwait(false);
+            var result = await CrawlHandler.ProcessAsync(
+                new Configuration("http://google.com/", "${TempPath}\\TestFileWrite")
+                {
+                    Depth = 2,
+                    Mode = TraversalMode.AnyHost
+                }).ConfigureAwait(false);
 
             foreach (var (url, exception) in result.FailedUrls)
                 Console.WriteLine($"{url}: {exception}");

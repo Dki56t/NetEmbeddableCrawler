@@ -59,7 +59,7 @@ namespace Crawler.Logic
             _disposed = true;
         }
 
-        public async Task<byte[]> LoadBytesAsync(string url)
+        public async Task<byte[]?> LoadBytesAsync(string url)
         {
             _token.ThrowIfCancellationRequested();
 
@@ -68,7 +68,7 @@ namespace Crawler.Logic
                 .ConfigureAwait(false);
         }
 
-        public async Task<string> LoadStringAsync(string url)
+        public async Task<string?> LoadStringAsync(string url)
         {
             _token.ThrowIfCancellationRequested();
 
@@ -77,7 +77,7 @@ namespace Crawler.Logic
                 .ConfigureAwait(false);
         }
 
-        private async Task<TResult> HandleAllowedExceptionsAsync<TResult>(string url,
+        private async Task<TResult?> HandleAllowedExceptionsAsync<TResult>(string url,
             Func<HttpContent, Task<TResult>> action)
             where TResult : class
         {
@@ -106,7 +106,7 @@ namespace Crawler.Logic
             }
         }
 
-        private async Task<HttpResponseMessage> GetAsync(string url)
+        private async Task<HttpResponseMessage?> GetAsync(string url)
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(_token);
             cts.CancelAfter(Timeout);
@@ -116,7 +116,7 @@ namespace Crawler.Logic
             return numCode > 299 || numCode < 200 ? null : message;
         }
 
-        private static bool AllowSkipException(Exception exception)
+        private static bool AllowSkipException(Exception? exception)
         {
             if (exception == null)
                 return false;

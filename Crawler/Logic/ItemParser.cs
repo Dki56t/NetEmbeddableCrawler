@@ -17,7 +17,7 @@ namespace Crawler.Logic
             _mode = mode;
         }
 
-        public ParsingResult ParseAndUpdateContent(Item item, bool allowUrlMappingCreation, WalkContext context = null)
+        public ParsingResult? ParseAndUpdateContent(Item item, bool allowUrlMappingCreation, WalkContext? context = null)
         {
             if (item.Type != ItemType.Html)
                 return null;
@@ -103,7 +103,7 @@ namespace Crawler.Logic
             }
         }
 
-        private static string PrepareUri(string url, string root)
+        private static string? PrepareUri(string url, string root)
         {
             var uri = UrlHelper.IsExternalLink(url)
                 ? url

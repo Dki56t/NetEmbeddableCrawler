@@ -24,12 +24,7 @@ namespace Crawler
 
         public static async Task<ProcessingResult> ProcessAsync(Configuration configuration, CancellationToken token)
         {
-            if (!string.IsNullOrEmpty(configuration.DestinationDirectory))
-            {
-                var tmpPath = Path.GetTempPath();
-                tmpPath = tmpPath.Remove(tmpPath.LastIndexOf(Path.DirectorySeparatorChar));
-                configuration.DestinationDirectory = configuration.DestinationDirectory.Replace("${TempPath}", tmpPath);
-            }
+            
 
             using var fileLoader = new FileLoader(token);
             var mapper = new UrlMapper(configuration);

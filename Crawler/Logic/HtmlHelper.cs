@@ -20,7 +20,7 @@ namespace Crawler.Logic
             string ext;
             if (validUri)
             {
-                if (uri.Segments.Length == 0)
+                if (uri!.Segments.Length == 0)
                     throw new InvalidOperationException($"Invalid url ({url})");
                 ext = Path.GetExtension(uri.Segments.Last());
             }

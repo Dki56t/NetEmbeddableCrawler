@@ -20,8 +20,8 @@ namespace Crawler.Projections
 
         public ItemType Type { get; }
         public string Root { get; }
-        public byte[] ByteContent { get; set; }
-        public string Content { get; set; }
+        public byte[]? ByteContent { get; set; }
+        public string? Content { get; set; }
         public string Uri { get; }
         public bool IsEmpty => (ByteContent == null || ByteContent.Length == 0) && string.IsNullOrWhiteSpace(Content);
     }

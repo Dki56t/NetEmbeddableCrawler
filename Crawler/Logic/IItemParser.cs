@@ -4,6 +4,6 @@ namespace Crawler.Logic
 {
     internal interface IItemParser
     {
-        ParsingResult ParseAndUpdateContent(Item item, bool allowUrlMappingCreation, WalkContext context = null);
+        ParsingResult? ParseAndUpdateContent(Item item, bool allowUrlMappingCreation, WalkContext? context = null);
     }
 }

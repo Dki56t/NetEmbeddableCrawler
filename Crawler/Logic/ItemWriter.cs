@@ -24,6 +24,9 @@ namespace Crawler.Logic
                     $"Ambiguity in Item content. Only one of them should be filled ({item.Uri}).");
 
             var path = _urlMapper.CreatePath(item.Uri);
+            if (string.IsNullOrEmpty(path))
+                throw new InvalidOperationException($"Can not write item due to incorrect mapping (uri={item.Uri})");
+
             var directoryPath = Path.GetDirectoryName(path);
             if (!Directory.Exists(Path.GetDirectoryName(path)))
                 Directory.CreateDirectory(directoryPath ?? throw new InvalidOperationException($"Invalid path {path}"));

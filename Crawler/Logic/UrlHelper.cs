@@ -9,7 +9,7 @@ namespace Crawler.Logic
             return url.StartsWith("//") || url.StartsWith("http");
         }
 
-        public static string NormalizeUrl(string url)
+        public static string? NormalizeUrl(string url)
         {
             var partialIndex = url.IndexOf("/#", StringComparison.Ordinal);
             if (partialIndex > -1)
