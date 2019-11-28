@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Text;
+﻿using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Crawler.Logic;
@@ -24,8 +23,6 @@ namespace Crawler
 
         public static async Task<ProcessingResult> ProcessAsync(Configuration configuration, CancellationToken token)
         {
-            
-
             using var fileLoader = new FileLoader(token);
             var mapper = new UrlMapper(configuration);
             var parser = new ItemParser(mapper, configuration.Mode);
