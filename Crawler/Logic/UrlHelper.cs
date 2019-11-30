@@ -4,9 +4,9 @@ namespace Crawler.Logic
 {
     internal static class UrlHelper
     {
-        public static bool IsExternalLink(string url)
+        public static bool IsAbsoluteUrl(string url)
         {
-            return url.StartsWith("//") || url.StartsWith("http");
+            return Uri.TryCreate(url, UriKind.Absolute, out _);
         }
 
         public static string? NormalizeUrl(string url)

@@ -28,9 +28,9 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldDetermineIfItIsExternalLink()
         {
-            UrlHelper.IsExternalLink("http://site.com").ShouldBeTrue();
-            UrlHelper.IsExternalLink("https://site.com").ShouldBeTrue();
-            UrlHelper.IsExternalLink("//site.com").ShouldBeTrue();
+            UrlHelper.IsAbsoluteUrl("http://site.com").ShouldBeTrue();
+            UrlHelper.IsAbsoluteUrl("https://site.com").ShouldBeTrue();
+            UrlHelper.IsAbsoluteUrl("//site.com").ShouldBeTrue();
         }
 
         [Fact]

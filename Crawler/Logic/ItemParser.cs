@@ -105,7 +105,7 @@ namespace Crawler.Logic
 
         private static string? PrepareUri(string url, string root)
         {
-            var uri = UrlHelper.IsExternalLink(url)
+            var uri = UrlHelper.IsAbsoluteUrl(url)
                 ? url
                 : UrlHelper.BuildRelativeUri(root, url);
             return UrlHelper.NormalizeUrl(uri);
