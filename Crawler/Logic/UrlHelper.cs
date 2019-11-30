@@ -10,32 +10,27 @@ namespace Crawler.Logic
                    !string.Equals(uri.Scheme, "data", StringComparison.OrdinalIgnoreCase);
         }
 
-        public static string? NormalizeUrl(string url)
+        public static Uri? NormalizeUrl(string url)
         {
-            var partialIndex = url.IndexOf("#", StringComparison.Ordinal);
-            if (partialIndex > -1)
-                url = url.Remove(partialIndex);
+            var fragmentIndex = url.IndexOf("#", StringComparison.Ordinal);
+            if (fragmentIndex > -1)
+                url = url.Remove(fragmentIndex);
             if (url.StartsWith("//"))
                 url = $"https:{url}";
             if (url.EndsWith("/"))
                 url = url.Remove(url.LastIndexOf("/", StringComparison.Ordinal));
 
-            return !Uri.TryCreate(url, UriKind.Absolute, out _) ? null : url;
+            return !Uri.TryCreate(url, UriKind.Absolute, out var uri) ? null : uri;
         }
 
-        public static string GetPartialUrl(string url)
+        public static string GetFragmentComponent(Uri uri)
         {
-            var index = url.LastIndexOf("/#", StringComparison.Ordinal);
-            if (index > -1)
-                return url.Substring(index);
-            index = url.LastIndexOf("#", StringComparison.Ordinal);
-            return index > -1 ? url.Substring(index) : string.Empty;
+            return uri.GetComponents(UriComponents.Fragment, UriFormat.Unescaped);
         }
 
-        public static string ExtractRoot(string url)
+        public static Uri ExtractRoot(Uri uri)
         {
-            var uri = new Uri(url);
-            return uri.GetLeftPart(UriPartial.Authority);
+            return uri.GetLeftPart(UriPartial.Authority).AsUri();
         }
 
         public static string BuildRelativeUri(string root, string relative)
@@ -49,13 +44,15 @@ namespace Crawler.Logic
             return $"{root}{delimiter}{relative}";
         }
 
-        public static bool EqualHosts(string first, string second)
+        public static bool EqualHosts(Uri first, Uri second)
         {
-            var newRootUri = new Uri(first);
-            var currentRootUri = new Uri(second);
-
-            return Uri.Compare(currentRootUri, newRootUri, UriComponents.Host, UriFormat.SafeUnescaped,
+            return Uri.Compare(first, second, UriComponents.Host, UriFormat.SafeUnescaped,
                        StringComparison.InvariantCultureIgnoreCase) == 0;
+        }
+
+        public static Uri AsUri(this string originalString)
+        {
+            return new Uri(originalString, UriKind.RelativeOrAbsolute);
         }
     }
 }

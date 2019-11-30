@@ -8,12 +8,12 @@ namespace Crawler.Logic
 {
     internal sealed class ItemWriter : IItemWriter
     {
-        private readonly IUrlMapper _urlMapper;
+        private readonly IUriMapper _uriMapper;
         private readonly ConcurrentDictionary<string, byte> _wroteFiles;
 
-        public ItemWriter(IUrlMapper urlMapper)
+        public ItemWriter(IUriMapper uriMapper)
         {
-            _urlMapper = urlMapper;
+            _uriMapper = uriMapper;
             _wroteFiles = new ConcurrentDictionary<string, byte>();
         }
 
@@ -23,7 +23,7 @@ namespace Crawler.Logic
                 throw new InvalidOperationException(
                     $"Ambiguity in Item content. Only one of them should be filled ({item.Uri}).");
 
-            var path = _urlMapper.CreatePath(item.Uri);
+            var path = _uriMapper.CreatePath(item.Uri);
             if (string.IsNullOrEmpty(path))
                 throw new InvalidOperationException($"Can not write item due to incorrect mapping (uri={item.Uri})");
 

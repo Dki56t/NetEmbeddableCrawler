@@ -17,12 +17,12 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldDetermineEqualHosts()
         {
-            UrlHelper.EqualHosts("http://site.com", "http://site.com").ShouldBeTrue();
-            UrlHelper.EqualHosts("http://SITE.com", "http://site.com").ShouldBeTrue();
-            UrlHelper.EqualHosts("https://site.com", "http://site.com").ShouldBeTrue();
-            UrlHelper.EqualHosts("https://site.com", "http://site.com/page").ShouldBeTrue();
-            UrlHelper.EqualHosts("https://site1.com", "http://site.com").ShouldBeFalse();
-            UrlHelper.EqualHosts("https://site.com", "http://site.net").ShouldBeFalse();
+            UrlHelper.EqualHosts("http://site.com".AsUri(), "http://site.com".AsUri()).ShouldBeTrue();
+            UrlHelper.EqualHosts("http://SITE.com".AsUri(), "http://site.com".AsUri()).ShouldBeTrue();
+            UrlHelper.EqualHosts("https://site.com".AsUri(), "http://site.com".AsUri()).ShouldBeTrue();
+            UrlHelper.EqualHosts("https://site.com".AsUri(), "http://site.com/page".AsUri()).ShouldBeTrue();
+            UrlHelper.EqualHosts("https://site1.com".AsUri(), "http://site.com".AsUri()).ShouldBeFalse();
+            UrlHelper.EqualHosts("https://site.com".AsUri(), "http://site.net".AsUri()).ShouldBeFalse();
         }
 
         [Fact]
@@ -40,28 +40,28 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldExtractRoot()
         {
-            UrlHelper.ExtractRoot("http://site.com").ShouldBe("http://site.com");
-            UrlHelper.ExtractRoot("http://site.com/sub-page").ShouldBe("http://site.com");
-            UrlHelper.ExtractRoot("http://site.com/sub-page/sub-sub-page").ShouldBe("http://site.com");
+            UrlHelper.ExtractRoot("http://site.com".AsUri()).ShouldBe("http://site.com".AsUri());
+            UrlHelper.ExtractRoot("http://site.com/sub-page".AsUri()).ShouldBe("http://site.com".AsUri());
+            UrlHelper.ExtractRoot("http://site.com/sub-page/sub-sub-page".AsUri()).ShouldBe("http://site.com".AsUri());
         }
 
         [Fact]
-        public void ShouldGetPartialUrl()
+        public void ShouldGetFragmentComponent()
         {
-            UrlHelper.GetPartialUrl("http://site.com").ShouldBe(string.Empty);
-            UrlHelper.GetPartialUrl("http://site.com/#").ShouldBe("/#");
-            UrlHelper.GetPartialUrl("http://site.com/#test").ShouldBe("/#test");
-            UrlHelper.GetPartialUrl("http://site.com/test#part").ShouldBe("#part");
+            UrlHelper.GetFragmentComponent("http://site.com".AsUri()).ShouldBe(string.Empty);
+            UrlHelper.GetFragmentComponent("http://site.com/#".AsUri()).ShouldBe(string.Empty);
+            UrlHelper.GetFragmentComponent("http://site.com/#test".AsUri()).ShouldBe("test");
+            UrlHelper.GetFragmentComponent("http://site.com/test#part".AsUri()).ShouldBe("part");
         }
 
         [Fact]
         public void ShouldNormalizeUrl()
         {
-            UrlHelper.NormalizeUrl("http://site.com").ShouldBe("http://site.com");
-            UrlHelper.NormalizeUrl("http://site.com/#").ShouldBe("http://site.com");
-            UrlHelper.NormalizeUrl("http://site.com/#test").ShouldBe("http://site.com");
-            UrlHelper.NormalizeUrl("//site.com").ShouldBe("https://site.com");
-            UrlHelper.NormalizeUrl("https://site.com/").ShouldBe("https://site.com");
+            UrlHelper.NormalizeUrl("http://site.com").ShouldBe("http://site.com".AsUri());
+            UrlHelper.NormalizeUrl("http://site.com/#").ShouldBe("http://site.com".AsUri());
+            UrlHelper.NormalizeUrl("http://site.com/#test").ShouldBe("http://site.com".AsUri());
+            UrlHelper.NormalizeUrl("//site.com").ShouldBe("https://site.com".AsUri());
+            UrlHelper.NormalizeUrl("https://site.com/").ShouldBe("https://site.com".AsUri());
             UrlHelper.NormalizeUrl("//").ShouldBeNull();
             UrlHelper.NormalizeUrl(";").ShouldBeNull();
         }

@@ -9,15 +9,16 @@ namespace Crawler.Logic
     internal sealed class ItemParser : IItemParser
     {
         private readonly TraversalMode _mode;
-        private readonly IUrlMapper _urlMapper;
+        private readonly IUriMapper _uriMapper;
 
-        public ItemParser(IUrlMapper urlMapper, TraversalMode mode)
+        public ItemParser(IUriMapper uriMapper, TraversalMode mode)
         {
-            _urlMapper = urlMapper;
+            _uriMapper = uriMapper;
             _mode = mode;
         }
 
-        public ParsingResult? ParseAndUpdateContent(Item item, bool allowUrlMappingCreation, WalkContext? context = null)
+        public ParsingResult? ParseAndUpdateContent(Item item, bool allowUriMappingCreation,
+            WalkContext? context = null)
         {
             if (item.Type != ItemType.Html)
                 return null;
@@ -35,8 +36,8 @@ namespace Crawler.Logic
             foreach (var link in links)
             {
                 var uri = PrepareUri(link.Value, item.Root);
-                if (string.IsNullOrEmpty(uri))
-                    throw new InvalidOperationException("Empty url can not be processed");
+                if (uri == null)
+                    throw new InvalidOperationException("Empty uri can not be processed");
 
                 var newRoot = UrlHelper.ExtractRoot(uri);
 
@@ -44,8 +45,8 @@ namespace Crawler.Logic
                 if (!CrawlingIsAllowed(item.Root, newRoot)) continue;
 
                 var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
-                // If crawling should be done, replace url with path in the file system.
-                UpdateLinkUrlIfNeeded(uri, link, type, allowUrlMappingCreation);
+                // If crawling should be done, replace uri with path in the file system.
+                UpdateLinkUriIfNeeded(uri, link, type, allowUriMappingCreation);
 
                 // Check if processing is necessary.
                 if (!context.TryRequestContentProcessing(uri))
@@ -60,7 +61,7 @@ namespace Crawler.Logic
             return new ParsingResult(deeperItems, context);
         }
 
-        private IEnumerable<HtmlAttribute> PreprocessNodeAndGetLink(HtmlNode node, string root)
+        private IEnumerable<HtmlAttribute> PreprocessNodeAndGetLink(HtmlNode node, Uri root)
         {
             var links = new List<HtmlAttribute>();
 
@@ -69,7 +70,7 @@ namespace Crawler.Logic
             foreach (var attribute in allNestedAttributes)
             {
                 var uri = PrepareUri(attribute.Value, root);
-                if (string.IsNullOrEmpty(uri))
+                if (uri == null)
                     continue;
 
                 // Find all links.
@@ -85,33 +86,33 @@ namespace Crawler.Logic
             return links;
         }
 
-        private void UpdateLinkUrlIfNeeded(string uri, HtmlAttribute link, NodeType type, bool allowUrlMappingCreation)
+        private void UpdateLinkUriIfNeeded(Uri uri, HtmlAttribute link, NodeType type, bool allowUriMappingCreation)
         {
             if (_mode == TraversalMode.SameHostSnapshot)
                 return;
 
-            var partialPart = UrlHelper.GetPartialUrl(uri);
-            if (allowUrlMappingCreation)
+            var fragmentComponent = UrlHelper.GetFragmentComponent(uri);
+            if (allowUriMappingCreation)
             {
-                link.Value = $"{_urlMapper.CreatePath(uri, type)}{partialPart}";
+                link.Value = $"{_uriMapper.CreatePath(uri, type)}{fragmentComponent}";
             }
             else
             {
-                var path = _urlMapper.GetPath(uri);
+                var path = _uriMapper.GetPath(uri);
                 if (!string.IsNullOrEmpty(path))
-                    link.Value = $"{path}{partialPart}";
+                    link.Value = $"{path}{fragmentComponent}";
             }
         }
 
-        private static string? PrepareUri(string url, string root)
+        private static Uri? PrepareUri(string url, Uri root)
         {
             var uri = UrlHelper.IsAbsoluteUrl(url)
                 ? url
-                : UrlHelper.BuildRelativeUri(root, url);
+                : UrlHelper.BuildRelativeUri(root.OriginalString, url);
             return UrlHelper.NormalizeUrl(uri);
         }
 
-        private bool CrawlingIsAllowed(string root, string newRoot)
+        private bool CrawlingIsAllowed(Uri root, Uri newRoot)
         {
             return _mode == TraversalMode.AnyHost || UrlHelper.EqualHosts(root, newRoot);
         }
@@ -123,7 +124,7 @@ namespace Crawler.Logic
                 NodeType.Html => ItemType.Html,
                 NodeType.Text => ItemType.Text,
                 NodeType.Binary => ItemType.Binary,
-                NodeType.Partial => (ItemType?) null,
+                NodeType.Fragmented => (ItemType?) null,
                 NodeType.Mail => null,
                 _ => throw new ArgumentOutOfRangeException()
             };

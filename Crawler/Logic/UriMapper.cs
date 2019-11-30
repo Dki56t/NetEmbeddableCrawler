@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Crawler.Logic
 {
-    internal sealed class UrlMapper : IUrlMapper
+    internal sealed class UriMapper : IUriMapper
     {
         private const string Index = "index.html";
         private const int MaxFileNameLength = 200;
@@ -26,65 +26,61 @@ namespace Crawler.Logic
         };
 
         /// <summary>
-        ///     Contains map url from html (as a key) to path in file system.
+        ///     Contains map from uri (as a key) to path in file system.
         /// </summary>
-        private readonly ConcurrentDictionary<string, string> _map = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<Uri, string> _map = new ConcurrentDictionary<Uri, string>(new UriComparer());
 
         private readonly string _outputDirectory;
 
-        public UrlMapper(Configuration cfg)
+        public UriMapper(Configuration cfg)
         {
             _outputDirectory = cfg.DestinationDirectory;
         }
 
-        public string? CreatePath(string url, NodeType? nodeType = null)
+        public string? CreatePath(Uri uri, NodeType? nodeType = null)
         {
-            var normalizedUrl = UrlHelper.NormalizeUrl(url);
-            if (string.IsNullOrEmpty(normalizedUrl))
+            var normalizedUri = UrlHelper.NormalizeUrl(uri.OriginalString);
+            if (normalizedUri == null)
                 return null;
 
-            if (_map.ContainsKey(normalizedUrl))
-                return _map[normalizedUrl];
+            uri = normalizedUri;
+            if (_map.ContainsKey(uri))
+                return _map[uri];
 
-            var uri = new Uri(normalizedUrl);
             var extension = Path.GetExtension(uri.LocalPath);
             if (!string.IsNullOrWhiteSpace(uri.Query) && Constant.TxtFileExtensions.Contains(extension))
-                uri = new Uri(uri.AbsoluteUri.Remove(uri.AbsoluteUri.IndexOf(uri.Query,
-                    StringComparison.InvariantCultureIgnoreCase)));
+                uri = uri.AbsoluteUri
+                    .Remove(uri.AbsoluteUri.IndexOf(uri.Query, StringComparison.InvariantCultureIgnoreCase)).AsUri();
 
-            var hostUrl = UrlHelper.ExtractRoot(normalizedUrl);
-            if (!_map.ContainsKey(hostUrl))
+            var hostUri = UrlHelper.ExtractRoot(uri);
+            if (!_map.ContainsKey(hostUri))
             {
                 var hostPath = $"{_outputDirectory}\\{uri.Host}\\{Index}";
-                _map.AddOrUpdate(hostUrl, _ => hostPath, (key, value) => value);
+                _map.AddOrUpdate(hostUri, _ => hostPath, (key, value) => value);
 
-                if (hostUrl == normalizedUrl)
-                    return _map[normalizedUrl];
+                if (hostUri == uri)
+                    return _map[uri];
             }
 
-            var hostDirectoryPath = Path.GetDirectoryName(_map[hostUrl]);
+            var hostDirectoryPath = Path.GetDirectoryName(_map[hostUri]);
 
-            // SubUrl it is a part of url between host name and last segment (if last segment is file name).
-            var subUrl = GetDirectoryName(uri);
+            // Directory name is a part of uri between host name and last segment (if last segment is file name).
+            var directory = GetDirectoryName(uri);
 
-            // If subUrl is empty, it won't insert into link.
-            if (subUrl == null || subUrl == "\\")
-                subUrl = string.Empty;
+            // If directory name is empty, it won't be inserted into link.
+            if (directory == null || directory == "\\")
+                directory = string.Empty;
 
             var fileName = GetFileName(uri);
-            var filePath = $"{hostDirectoryPath}{subUrl}\\{GetFileNameOrDefault(fileName, uri.Query, nodeType)}";
+            var filePath = $"{hostDirectoryPath}{directory}\\{GetFileNameOrDefault(fileName, uri.Query, nodeType)}";
 
-            _map.AddOrUpdate(normalizedUrl, _ => filePath, (key, value) => value);
-            return _map[normalizedUrl];
+            _map.AddOrUpdate(uri, _ => filePath, (key, value) => value);
+            return _map[uri];
         }
 
-        public string? GetPath(string url)
+        public string? GetPath(Uri uri)
         {
-            var normalizedUrl = UrlHelper.NormalizeUrl(url);
-            if (string.IsNullOrEmpty(normalizedUrl))
-                return null;
-
-            return _map.ContainsKey(normalizedUrl) ? _map[normalizedUrl] : null;
+            return _map.ContainsKey(uri) ? _map[uri] : null;
         }
 
         private static string GetFileNameOrDefault(string fileName, string query, NodeType? nodeType)

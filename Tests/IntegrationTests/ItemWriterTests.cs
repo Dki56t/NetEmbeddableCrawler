@@ -34,12 +34,12 @@ namespace Tests.IntegrationTests
         [Fact]
         public async Task ShouldWriteItemsToFileSystem()
         {
-            var item1 = new Item("http://site1/index.html");
-            var item11 = new Item("http://site1/internal/internal.html");
-            var item2 = new Item("http://site2/index.html");
-            var item21 = new Item("http://site2/other_internal/some.html");
+            var item1 = new Item("http://site1/index.html".AsUri());
+            var item11 = new Item("http://site1/internal/internal.html".AsUri());
+            var item2 = new Item("http://site2/index.html".AsUri());
+            var item21 = new Item("http://site2/other_internal/some.html".AsUri());
 
-            var mapper = new Mock<IUrlMapper>();
+            var mapper = new Mock<IUriMapper>();
             mapper.Setup(x => x.CreatePath(item1.Uri, null))
                 .Returns(Path.Combine(_testDirectoryPath, "site1\\index.html"));
             mapper.Setup(x => x.CreatePath(item11.Uri, null))

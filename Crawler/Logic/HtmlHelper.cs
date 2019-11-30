@@ -9,7 +9,7 @@ namespace Crawler.Logic
         public static NodeType ResolveType(string nodeName, string url)
         {
             if (url.StartsWith("#"))
-                return NodeType.Partial;
+                return NodeType.Fragmented;
             if (Constant.BinaryNodes.Contains(nodeName))
                 return NodeType.Binary;
             if (url.StartsWith("mailto"))
@@ -37,14 +37,5 @@ namespace Crawler.Logic
                 return NodeType.Html;
             return NodeType.Binary;
         }
-    }
-
-    public enum NodeType
-    {
-        Html,
-        Text,
-        Binary,
-        Partial,
-        Mail
     }
 }

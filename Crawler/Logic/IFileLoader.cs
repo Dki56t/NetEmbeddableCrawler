@@ -1,10 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Crawler.Logic
 {
     internal interface IFileLoader
     {
-        Task<byte[]?> LoadBytesAsync(string url);
-        Task<string?> LoadStringAsync(string url);
+        Task<byte[]?> LoadBytesAsync(Uri uri);
+        Task<string?> LoadStringAsync(Uri uri);
     }
 }

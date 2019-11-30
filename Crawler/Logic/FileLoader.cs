@@ -28,10 +28,12 @@ namespace Crawler.Logic
 
         private readonly HttpClient _client;
 
-        private readonly ConcurrentDictionary<string, Exception> _failedUrls =
-            new ConcurrentDictionary<string, Exception>();
+        private readonly ConcurrentDictionary<Uri, Exception> _failedUris =
+            new ConcurrentDictionary<Uri, Exception>(new UriComparer());
 
-        private readonly ConcurrentDictionary<string, byte> _processedUrls = new ConcurrentDictionary<string, byte>();
+        private readonly ConcurrentDictionary<Uri, byte> _processedUris =
+            new ConcurrentDictionary<Uri, byte>(new UriComparer());
+
         private readonly SemaphoreSlim _semaphore;
         private readonly CancellationToken _token;
         private bool _disposed;
@@ -43,9 +45,9 @@ namespace Crawler.Logic
             _semaphore = new SemaphoreSlim(32);
         }
 
-        public IDictionary<string, Exception> FailedUrls
+        public IDictionary<Uri, Exception> FailedUris
         {
-            get { return _failedUrls.ToDictionary(p => p.Key, p => p.Value); }
+            get { return _failedUris.ToDictionary(p => p.Key, p => p.Value); }
         }
 
         public void Dispose()
@@ -59,35 +61,35 @@ namespace Crawler.Logic
             _disposed = true;
         }
 
-        public async Task<byte[]?> LoadBytesAsync(string url)
+        public async Task<byte[]?> LoadBytesAsync(Uri uri)
         {
             _token.ThrowIfCancellationRequested();
 
-            return await HandleAllowedExceptionsAsync(url,
+            return await HandleAllowedExceptionsAsync(uri,
                     async content => await content.ReadAsByteArrayAsync().ConfigureAwait(false))
                 .ConfigureAwait(false);
         }
 
-        public async Task<string?> LoadStringAsync(string url)
+        public async Task<string?> LoadStringAsync(Uri uri)
         {
             _token.ThrowIfCancellationRequested();
 
-            return await HandleAllowedExceptionsAsync(url,
+            return await HandleAllowedExceptionsAsync(uri,
                     async content => await content.ReadAsStringAsync().ConfigureAwait(false))
                 .ConfigureAwait(false);
         }
 
-        private async Task<TResult?> HandleAllowedExceptionsAsync<TResult>(string url,
+        private async Task<TResult?> HandleAllowedExceptionsAsync<TResult>(Uri uri,
             Func<HttpContent, Task<TResult>> action)
             where TResult : class
         {
-            EnsureFirstLoading(url);
+            EnsureFirstLoading(uri);
 
             await _semaphore.WaitAsync(_token).ConfigureAwait(false);
 
             try
             {
-                var response = await GetAsync(url).ConfigureAwait(false);
+                var response = await GetAsync(uri).ConfigureAwait(false);
                 if (response == null) return null;
 
                 return await action(response.Content).ConfigureAwait(false);
@@ -97,7 +99,7 @@ namespace Crawler.Logic
                 if (!AllowSkipException(ex))
                     throw;
 
-                _failedUrls.TryAdd(url, ex);
+                _failedUris.TryAdd(uri, ex);
                 return null;
             }
             finally
@@ -106,12 +108,12 @@ namespace Crawler.Logic
             }
         }
 
-        private async Task<HttpResponseMessage?> GetAsync(string url)
+        private async Task<HttpResponseMessage?> GetAsync(Uri uri)
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(_token);
             cts.CancelAfter(Timeout);
 
-            var message = await _client.GetAsync(url, cts.Token).ConfigureAwait(false);
+            var message = await _client.GetAsync(uri, cts.Token).ConfigureAwait(false);
             var numCode = (int) message.StatusCode;
             return numCode > 299 || numCode < 200 ? null : message;
         }
@@ -126,10 +128,10 @@ namespace Crawler.Logic
         }
 
         [Conditional("DEBUG")]
-        private void EnsureFirstLoading(string url)
+        private void EnsureFirstLoading(Uri uri)
         {
-            if (!_processedUrls.TryAdd(url, 0))
-                throw new InvalidOperationException($"Unnecessary content downloading from url: {url}");
+            if (!_processedUris.TryAdd(uri, 0))
+                throw new InvalidOperationException($"Unnecessary content downloading from uri: {uri.OriginalString}");
         }
     }
 }

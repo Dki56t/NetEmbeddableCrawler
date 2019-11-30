@@ -24,14 +24,14 @@ namespace Crawler
         public static async Task<ProcessingResult> ProcessAsync(Configuration configuration, CancellationToken token)
         {
             using var fileLoader = new FileLoader(token);
-            var mapper = new UrlMapper(configuration);
+            var mapper = new UriMapper(configuration);
             var parser = new ItemParser(mapper, configuration.Mode);
             var writer = new ItemWriter(mapper);
             var processor = new ItemProcessor(fileLoader, parser, writer, configuration, token);
 
             await processor.RunAsync().ConfigureAwait(false);
 
-            return new ProcessingResult(fileLoader.FailedUrls);
+            return new ProcessingResult(fileLoader.FailedUris);
         }
     }
 }

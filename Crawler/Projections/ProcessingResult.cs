@@ -8,15 +8,15 @@ namespace Crawler.Projections
     /// </summary>
     public class ProcessingResult
     {
-        public ProcessingResult(IDictionary<string, Exception> failedUrls)
+        public ProcessingResult(IDictionary<Uri, Exception> failedUris)
         {
-            FailedUrls = failedUrls ?? throw new ArgumentNullException(nameof(failedUrls));
+            FailedUris = failedUris ?? throw new ArgumentNullException(nameof(failedUris));
         }
 
         /// <summary>
-        ///     A list of urls loading of content from which was failed.
-        ///     A value for every url is an exception occured.
+        ///     A list of uris loading of content from which was failed.
+        ///     A value for every uri is an exception occured.
         /// </summary>
-        public IDictionary<string, Exception> FailedUrls { get; }
+        public IDictionary<Uri, Exception> FailedUris { get; }
     }
 }

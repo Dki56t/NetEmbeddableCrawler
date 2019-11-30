@@ -35,11 +35,11 @@ namespace Crawler.Logic
         {
             _cancellationToken.ThrowIfCancellationRequested();
 
-            var rootLink = UrlHelper.NormalizeUrl(_configuration.RootLink);
-            if (string.IsNullOrEmpty(rootLink))
+            var rootUri = UrlHelper.NormalizeUrl(_configuration.RootLink);
+            if (rootUri == null)
                 throw new InvalidOperationException("Invalid root link");
 
-            var item = new Item(rootLink, ItemType.Html, UrlHelper.ExtractRoot(rootLink));
+            var item = new Item(rootUri, ItemType.Html, UrlHelper.ExtractRoot(rootUri));
 
             await WaitBeforeGoingDeeperAsync(_configuration.Depth, 1).ConfigureAwait(false);
             await ProcessAsync(item, null, _configuration.Depth).ConfigureAwait(false);
@@ -79,7 +79,8 @@ namespace Crawler.Logic
             if (parsingResult?.DeeperItems != null && depth > 0)
             {
                 await WaitBeforeGoingDeeperAsync(depth - 1, parsingResult.DeeperItems.Count).ConfigureAwait(false);
-                tasks.AddRange(parsingResult.DeeperItems.Select(u => ProcessAsync(u, parsingResult.Context, depth - 1)));
+                tasks.AddRange(
+                    parsingResult.DeeperItems.Select(u => ProcessAsync(u, parsingResult.Context, depth - 1)));
 
                 // ReSharper disable once RedundantAssignment - clearing reference in async state machine to avoid
                 // memory leak.
@@ -118,8 +119,8 @@ namespace Crawler.Logic
         }
 
         /// <summary>
-        ///     It should not process deeper level before it load all urls from current.
-        ///     Otherwise it would be impossible to get, whether a particular url accessible from
+        ///     It should not process deeper level before it load all uris from current.
+        ///     Otherwise it would be impossible to get, whether a particular uri accessible from
         ///     higher levels (and should be potentially mapped to file system) or not.
         /// </summary>
         private async Task WaitBeforeGoingDeeperAsync(int newDepth, int count)

@@ -10,20 +10,20 @@ namespace Tests.UnitTests
         [Fact]
         public void ShouldTreatHttpsAndHttpUrlAsSame()
         {
-            const string subUrl = "http://s.com/page";
-            const string basicallySameSubUrl = "https://s.com/page";
+            var subUri = "http://s.com/page".AsUri();
+            var basicallySameSubUri = "https://s.com/page".AsUri();
 
             var doc = new HtmlDocument();
             doc.LoadHtml("<body>" +
-                         $"<a href=\"{subUrl}\"> </a></body>");
+                         $"<a href=\"{subUri.OriginalString}\"> </a></body>");
 
-            var context = new WalkContext("http://s.com");
+            var context = new WalkContext("http://s.com".AsUri());
 
-            context.TryRequestContentProcessing(subUrl)
+            context.TryRequestContentProcessing(subUri)
                 .ShouldBeTrue("First request for content processing should be successful");
-            context.TryRequestContentProcessing(subUrl)
+            context.TryRequestContentProcessing(subUri)
                 .ShouldBeFalse("Second request for content processing should be unsuccessful");
-            context.TryRequestContentProcessing(basicallySameSubUrl)
+            context.TryRequestContentProcessing(basicallySameSubUri)
                 .ShouldBeFalse("First request for content processing " +
                                "(but with different scheme) should be unsuccessful");
         }

@@ -17,23 +17,23 @@ namespace Tests.UnitTests
         }
 
         [Fact]
-        public void ShouldResolveHtmlNodeType()
+        public void ShouldResolveFragmentedNodeType()
         {
-            const string url = "https://subdomain.domain.com";
-            const string urlPartial = "https://subdomain.domain.com/#23";
-            const string urlNumbers = "https://subdomain.domain.com/1.2.5";
+            const string urlSubFragmented = "#23";
 
-            HtmlHelper.ResolveType("a", url).ShouldBe(NodeType.Html);
-            HtmlHelper.ResolveType("a", urlPartial).ShouldBe(NodeType.Html);
-            HtmlHelper.ResolveType("a", urlNumbers).ShouldBe(NodeType.Html);
+            HtmlHelper.ResolveType("a", urlSubFragmented).ShouldBe(NodeType.Fragmented);
         }
 
         [Fact]
-        public void ShouldResolvePartialNodeType()
+        public void ShouldResolveHtmlNodeType()
         {
-            const string urlSubPartial = "#23";
+            const string url = "https://subdomain.domain.com";
+            const string urlFragmented = "https://subdomain.domain.com/#23";
+            const string urlNumbers = "https://subdomain.domain.com/1.2.5";
 
-            HtmlHelper.ResolveType("a", urlSubPartial).ShouldBe(NodeType.Partial);
+            HtmlHelper.ResolveType("a", url).ShouldBe(NodeType.Html);
+            HtmlHelper.ResolveType("a", urlFragmented).ShouldBe(NodeType.Html);
+            HtmlHelper.ResolveType("a", urlNumbers).ShouldBe(NodeType.Html);
         }
 
         [Fact]

@@ -15,7 +15,8 @@ namespace Tests.UnitTests
             var loader = new FileLoader(cts.Token);
 
             cts.Cancel();
-            await Assert.ThrowsAsync<OperationCanceledException>(() => loader.LoadStringAsync("http://some.com"))
+            await Assert
+                .ThrowsAsync<OperationCanceledException>(() => loader.LoadStringAsync("http://some.com".AsUri()))
                 .ConfigureAwait(false);
         }
     }

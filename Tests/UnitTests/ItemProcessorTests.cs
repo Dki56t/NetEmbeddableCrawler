@@ -24,6 +24,8 @@ namespace Tests.UnitTests
         private const string MainUrl = "http://site1.com";
         private const string Path = "C:\\";
         private const string SubUrl = "http://site1.com/sub-page";
+        private static readonly Uri MainUri = MainUrl.AsUri();
+        private static readonly Uri SubUri = SubUrl.AsUri();
 
         private readonly Configuration _cfg;
 
@@ -33,7 +35,7 @@ namespace Tests.UnitTests
             cfg ??= _cfg;
 
             var fileLoaderMock = new Mock<IFileLoader>();
-            var urlMapperMock = new Mock<IUrlMapper>();
+            var urlMapperMock = new Mock<IUriMapper>();
             var writerMock = new Mock<IItemWriter>();
 
             return new ProcessorTestContainer(fileLoaderMock, urlMapperMock, writerMock,
@@ -43,7 +45,7 @@ namespace Tests.UnitTests
 
         private class ProcessorTestContainer
         {
-            public ProcessorTestContainer(Mock<IFileLoader> loaderMock, Mock<IUrlMapper> urlMapperMock,
+            public ProcessorTestContainer(Mock<IFileLoader> loaderMock, Mock<IUriMapper> urlMapperMock,
                 Mock<IItemWriter> writerMock, ItemProcessor processor)
             {
                 LoaderMock = loaderMock;
@@ -53,7 +55,7 @@ namespace Tests.UnitTests
             }
 
             public Mock<IFileLoader> LoaderMock { get; }
-            public Mock<IUrlMapper> UrlMapperMock { get; }
+            public Mock<IUriMapper> UrlMapperMock { get; }
             public Mock<IItemWriter> WriterMock { get; }
             public ItemProcessor Processor { get; }
         }
@@ -63,22 +65,22 @@ namespace Tests.UnitTests
         [InlineData(false)]
         public async Task ShouldLoadUrlsFromDifferentDomainsDependingOnConfiguration(bool fullTraversal)
         {
-            const string subUrl = "http://site2.com";
+            var subUrl = "http://site2.com".AsUri();
             var mocks = CreateMocksAndProcessor(new Configuration(MainUrl, Path)
             {
                 Depth = 1,
                 Mode = fullTraversal ? TraversalMode.AnyHost : TraversalMode.SameHost
             });
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync($"<body><a href=\"{subUrl}\"> </a></body>");
             mocks.LoaderMock.Setup(x => x.LoadStringAsync(subUrl))
                 .ReturnsAsync("<body></body>");
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(It.IsAny<string>()), Times.Exactly(fullTraversal ? 2 : 1));
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(MainUrl), Times.Once);
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(It.IsAny<Uri>()), Times.Exactly(fullTraversal ? 2 : 1));
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(MainUri), Times.Once);
             mocks.LoaderMock.Verify(l => l.LoadStringAsync(subUrl), fullTraversal ? Times.Once() : Times.Never());
         }
 
@@ -87,23 +89,23 @@ namespace Tests.UnitTests
         {
             var mocks = CreateMocksAndProcessor();
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
                 .ReturnsAsync((string?) null);
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(MainUrl), Times.Once);
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(SubUrl), Times.Once);
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(MainUri), Times.Once);
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(SubUri), Times.Once);
             mocks.WriterMock.Verify(w => w.WriteAsync(It.IsAny<Item>()), Times.Once);
-            mocks.WriterMock.Verify(w => w.WriteAsync(It.Is<Item>(i => i.Uri == MainUrl)), Times.Once);
+            mocks.WriterMock.Verify(w => w.WriteAsync(It.Is<Item>(i => i.Uri == MainUri)), Times.Once);
         }
 
         [Fact]
         public async Task ShouldLoadStaticContent()
         {
-            const string styleNormalizedUrl = "http://site1.com/css/style.css";
+            var styleNormalizedUrl = "http://site1.com/css/style.css".AsUri();
             const string styleUrl = "css/style.css";
             const string mainContent = "<body><a href=\"css/style.css\"></a></body>";
             const string styleContent = "some text";
@@ -111,7 +113,7 @@ namespace Tests.UnitTests
 
             var mocks = CreateMocksAndProcessor();
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync(mainContent);
             mocks.LoaderMock.Setup(x => x.LoadStringAsync(styleNormalizedUrl))
                 .ReturnsAsync(styleContent);
@@ -123,7 +125,7 @@ namespace Tests.UnitTests
 
             mocks.WriterMock.Verify(
                 m => m.WriteAsync(
-                    It.Is<Item>(i => i.Uri == MainUrl && i.Content == mainContent.Replace(styleUrl, stylePath))),
+                    It.Is<Item>(i => i.Uri == MainUri && i.Content == mainContent.Replace(styleUrl, stylePath))),
                 Times.Once);
             mocks.WriterMock.Verify(
                 m => m.WriteAsync(It.Is<Item>(i => i.Uri == styleNormalizedUrl && i.Content == styleContent)),
@@ -135,38 +137,38 @@ namespace Tests.UnitTests
         {
             var mocks = CreateMocksAndProcessor();
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
                 .ReturnsAsync("<body></body>");
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
-            mocks.LoaderMock.Verify(m => m.LoadStringAsync(MainUrl), Times.Once);
-            mocks.LoaderMock.Verify(m => m.LoadStringAsync(SubUrl), Times.Once);
+            mocks.LoaderMock.Verify(m => m.LoadStringAsync(MainUri), Times.Once);
+            mocks.LoaderMock.Verify(m => m.LoadStringAsync(SubUri), Times.Once);
             mocks.WriterMock.Verify(m => m.WriteAsync(It.IsAny<Item>()), Times.Exactly(2));
         }
 
         [Fact]
         public async Task ShouldLoadTooDeepUrlsIfTheyAreAccessibleFromHigherLevels()
         {
-            const string deepUrl = "http://site1.com/too-deep-page";
+            var deepUri = "http://site1.com/too-deep-page".AsUri();
             var mocks = CreateMocksAndProcessor();
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a>" +
-                              $"<a href=\"{deepUrl}\"> </a></body>");
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
-                .ReturnsAsync($"<body><a href=\"{deepUrl}\"> </a></body>");
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(deepUrl))
+                              $"<a href=\"{deepUri.OriginalString}\"> </a></body>");
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
+                .ReturnsAsync($"<body><a href=\"{deepUri.OriginalString}\"> </a></body>");
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(deepUri))
                 .ReturnsAsync("<body></body>");
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(It.IsAny<string>()), Times.Exactly(3));
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(MainUrl), Times.Once);
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(SubUrl), Times.Once);
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(deepUrl), Times.Once);
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(It.IsAny<Uri>()), Times.Exactly(3));
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(MainUri), Times.Once);
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(SubUri), Times.Once);
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(deepUri), Times.Once);
         }
 
         [Fact]
@@ -174,11 +176,11 @@ namespace Tests.UnitTests
         {
             var mocks = CreateMocksAndProcessor();
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync("<body>" +
                               $"<a href=\"{SubUrl}\"> </a>" +
                               $"<a href=\"{SubUrl}\"> </a></body>");
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
                 .ReturnsAsync("<body>" +
                               $"<a href=\"{SubUrl}\"> </a>" +
                               $"<a href=\"{MainUrl}\"> </a>" +
@@ -186,9 +188,9 @@ namespace Tests.UnitTests
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
-            mocks.LoaderMock.Verify(x => x.LoadStringAsync(SubUrl), Times.Once);
-            mocks.LoaderMock.Verify(x => x.LoadStringAsync(MainUrl), Times.Once);
-            mocks.LoaderMock.Verify(x => x.LoadStringAsync("https://site1.com"), Times.Never,
+            mocks.LoaderMock.Verify(x => x.LoadStringAsync(SubUri), Times.Once);
+            mocks.LoaderMock.Verify(x => x.LoadStringAsync(MainUri), Times.Once);
+            mocks.LoaderMock.Verify(x => x.LoadStringAsync("https://site1.com".AsUri()), Times.Never,
                 "https and http urls should be treated as same");
         }
 
@@ -208,18 +210,18 @@ namespace Tests.UnitTests
 
             var mocks = CreateMocksAndProcessor();
 
-            mocks.UrlMapperMock.Setup(m => m.CreatePath(MainUrl, It.IsAny<NodeType?>()))
+            mocks.UrlMapperMock.Setup(m => m.CreatePath(MainUri, It.IsAny<NodeType?>()))
                 .Returns(mainPath);
-            mocks.UrlMapperMock.Setup(m => m.CreatePath(SubUrl, It.IsAny<NodeType?>()))
+            mocks.UrlMapperMock.Setup(m => m.CreatePath(SubUri, It.IsAny<NodeType?>()))
                 .Returns(subPath);
-            mocks.UrlMapperMock.Setup(m => m.GetPath(MainUrl))
+            mocks.UrlMapperMock.Setup(m => m.GetPath(MainUri))
                 .Returns(mainPath);
-            mocks.UrlMapperMock.Setup(m => m.GetPath(SubUrl))
+            mocks.UrlMapperMock.Setup(m => m.GetPath(SubUri))
                 .Returns(subPath);
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync(mainPageContent);
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
                 .ReturnsAsync(subPageContent);
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
@@ -229,17 +231,17 @@ namespace Tests.UnitTests
 
             mocks.WriterMock.Verify(m => m.WriteAsync(It.IsAny<Item>()), Times.Exactly(2));
             mocks.WriterMock.Verify(
-                m => m.WriteAsync(It.Is<Item>(i => i.Content == modifiedMainPage && i.Uri == MainUrl)),
+                m => m.WriteAsync(It.Is<Item>(i => i.Content == modifiedMainPage && i.Uri == MainUri)),
                 Times.Once);
             mocks.WriterMock.Verify(
-                m => m.WriteAsync(It.Is<Item>(i => i.Content == modifiedSubPage && i.Uri == SubUrl)),
+                m => m.WriteAsync(It.Is<Item>(i => i.Content == modifiedSubPage && i.Uri == SubUri)),
                 Times.Once);
         }
 
         [Fact]
         public async Task ShouldMutateTooDeepLinksIfTheyAreAccessibleFromHigherLevels()
         {
-            const string deepUrl = "http://site1.com/too-deep-page";
+            var deepUri = "http://site1.com/too-deep-page".AsUri();
             const string mainPath = "main";
             const string subPath = "sub";
             const string deepPath = "deep";
@@ -247,22 +249,22 @@ namespace Tests.UnitTests
 
             var mocks = CreateMocksAndProcessor();
 
-            var mainContent = $"<body><a href=\"{SubUrl}\"> </a><a href=\"{deepUrl}\"> </a></body>";
-            var subContent = $"<body><a href=\"{deepUrl}\"> </a></body>";
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            var mainContent = $"<body><a href=\"{SubUrl}\"> </a><a href=\"{deepUri.OriginalString}\"> </a></body>";
+            var subContent = $"<body><a href=\"{deepUri.OriginalString}\"> </a></body>";
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync(mainContent);
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
                 .ReturnsAsync(subContent);
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(deepUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(deepUri))
                 .ReturnsAsync("<body></body>");
 
-            mocks.UrlMapperMock.Setup(m => m.CreatePath(MainUrl, It.IsAny<NodeType?>()))
+            mocks.UrlMapperMock.Setup(m => m.CreatePath(MainUri, It.IsAny<NodeType?>()))
                 .Returns(mainPath);
-            mocks.UrlMapperMock.Setup(m => m.CreatePath(SubUrl, It.IsAny<NodeType?>()))
+            mocks.UrlMapperMock.Setup(m => m.CreatePath(SubUri, It.IsAny<NodeType?>()))
                 .Returns(subPath);
-            mocks.UrlMapperMock.Setup(m => m.CreatePath(deepUrl, It.IsAny<NodeType?>()))
+            mocks.UrlMapperMock.Setup(m => m.CreatePath(deepUri, It.IsAny<NodeType?>()))
                 .Returns(deepPath);
-            mocks.UrlMapperMock.Setup(m => m.GetPath(deepUrl))
+            mocks.UrlMapperMock.Setup(m => m.GetPath(deepUri))
                 .Returns(deepPath);
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
@@ -270,10 +272,10 @@ namespace Tests.UnitTests
             mocks.WriterMock.Verify(l => l.WriteAsync(It.IsAny<Item>()), Times.Exactly(3));
             mocks.WriterMock.Verify(
                 l => l.WriteAsync(It.Is<Item>(i =>
-                    i.Content == mainContent.Replace(SubUrl, subPath).Replace(deepUrl, deepPath))),
+                    i.Content == mainContent.Replace(SubUrl, subPath).Replace(deepUri.OriginalString, deepPath))),
                 Times.Once);
             mocks.WriterMock.Verify(
-                l => l.WriteAsync(It.Is<Item>(i => i.Content == subContent.Replace(deepUrl, deepPath))),
+                l => l.WriteAsync(It.Is<Item>(i => i.Content == subContent.Replace(deepUri.OriginalString, deepPath))),
                 Times.Once);
             mocks.WriterMock.Verify(l => l.WriteAsync(It.Is<Item>(i => i.Content == deepContent)), Times.Once);
         }
@@ -290,45 +292,45 @@ namespace Tests.UnitTests
             var mainContent = $"<body><a href=\"{SubUrl}\"></a></body>";
             var subContent = "<body></body>";
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync(mainContent);
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
                 .ReturnsAsync(subContent);
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
             mocks.WriterMock.Verify(m => m.WriteAsync(It.IsAny<Item>()), Times.Exactly(2));
-            mocks.WriterMock.Verify(m => m.WriteAsync(It.Is<Item>(i => i.Content == mainContent && i.Uri == MainUrl)),
+            mocks.WriterMock.Verify(m => m.WriteAsync(It.Is<Item>(i => i.Content == mainContent && i.Uri == MainUri)),
                 Times.Exactly(1));
-            mocks.WriterMock.Verify(m => m.WriteAsync(It.Is<Item>(i => i.Content == subContent && i.Uri == SubUrl)),
+            mocks.WriterMock.Verify(m => m.WriteAsync(It.Is<Item>(i => i.Content == subContent && i.Uri == SubUri)),
                 Times.Exactly(1));
         }
 
         [Fact]
         public async Task ShouldNotLoadTooDeepUrls()
         {
-            const string deepUrl = "http://site1.com/too-deep-page";
+            var deepUri = "http://site1.com/too-deep-page".AsUri();
             var mocks = CreateMocksAndProcessor();
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
-                .ReturnsAsync($"<body><a href=\"{deepUrl}\"> </a></body>");
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(deepUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
+                .ReturnsAsync($"<body><a href=\"{deepUri.OriginalString}\"> </a></body>");
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(deepUri))
                 .ReturnsAsync("<body></body>");
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(It.IsAny<string>()), Times.Exactly(2));
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(MainUrl), Times.Once);
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(SubUrl), Times.Once);
-            mocks.LoaderMock.Verify(l => l.LoadStringAsync(deepUrl), Times.Never);
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(It.IsAny<Uri>()), Times.Exactly(2));
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(MainUri), Times.Once);
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(SubUri), Times.Once);
+            mocks.LoaderMock.Verify(l => l.LoadStringAsync(deepUri), Times.Never);
         }
 
         [Fact]
         public async Task ShouldNotMutateTooDeepLinks()
         {
-            const string deepUrl = "http://site1.com/too-deep-page";
+            var deepUri = "http://site1.com/too-deep-page".AsUri();
             const string mainPath = "main";
             const string subPath = "sub";
             const string deepPath = "deep";
@@ -336,17 +338,17 @@ namespace Tests.UnitTests
             var mocks = CreateMocksAndProcessor();
 
             var mainContent = $"<body><a href=\"{SubUrl}\"> </a></body>";
-            var subContent = $"<body><a href=\"{deepUrl}\"> </a></body>";
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            var subContent = $"<body><a href=\"{deepUri.OriginalString}\"> </a></body>";
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync(mainContent);
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
                 .ReturnsAsync(subContent);
 
-            mocks.UrlMapperMock.Setup(m => m.CreatePath(MainUrl, It.IsAny<NodeType?>()))
+            mocks.UrlMapperMock.Setup(m => m.CreatePath(MainUri, It.IsAny<NodeType?>()))
                 .Returns(mainPath);
-            mocks.UrlMapperMock.Setup(m => m.CreatePath(SubUrl, It.IsAny<NodeType?>()))
+            mocks.UrlMapperMock.Setup(m => m.CreatePath(SubUri, It.IsAny<NodeType?>()))
                 .Returns(subPath);
-            mocks.UrlMapperMock.Setup(m => m.CreatePath(deepUrl, It.IsAny<NodeType?>()))
+            mocks.UrlMapperMock.Setup(m => m.CreatePath(deepUri, It.IsAny<NodeType?>()))
                 .Returns(deepPath);
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
@@ -356,7 +358,7 @@ namespace Tests.UnitTests
                 l => l.WriteAsync(It.Is<Item>(i => i.Content == mainContent.Replace(SubUrl, subPath))),
                 Times.Once);
             mocks.WriterMock.Verify(
-                l => l.WriteAsync(It.Is<Item>(i => i.Content == subContent.Replace(deepUrl, deepPath))),
+                l => l.WriteAsync(It.Is<Item>(i => i.Content == subContent.Replace(deepUri.OriginalString, deepPath))),
                 Times.Never);
             mocks.WriterMock.Verify(l => l.WriteAsync(It.Is<Item>(i => i.Content == subContent)), Times.Once);
         }
@@ -373,13 +375,13 @@ namespace Tests.UnitTests
 
             var mocks = CreateMocksAndProcessor();
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl)).ReturnsAsync(content);
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri)).ReturnsAsync(content);
 
             await mocks.Processor.RunAsync().ConfigureAwait(false);
 
             mocks.WriterMock.Verify(w => w.WriteAsync(It.IsAny<Item>()), Times.Once);
             mocks.WriterMock.Verify(
-                w => w.WriteAsync(It.Is<Item>(i => i.Uri == MainUrl && i.Content == clearedContent)),
+                w => w.WriteAsync(It.Is<Item>(i => i.Uri == MainUri && i.Content == clearedContent)),
                 Times.Once);
         }
 
@@ -389,9 +391,9 @@ namespace Tests.UnitTests
             using var cts = new CancellationTokenSource();
             var mocks = CreateMocksAndProcessor(null, cts.Token);
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
                 .ReturnsAsync("");
 
             cts.Cancel();
@@ -422,9 +424,9 @@ namespace Tests.UnitTests
                 Depth = 1
             });
 
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
                 .ReturnsAsync($"<body><a href=\"{SubUrl}\"> </a></body>");
-            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUrl))
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(SubUri))
                 .ThrowsAsync(new InvalidOperationException());
 
             await Should.ThrowAsync<InvalidOperationException>(

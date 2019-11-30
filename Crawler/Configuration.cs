@@ -1,18 +1,20 @@
 ﻿using System;
-using Crawler.Projections;
 using System.IO;
+using Crawler.Projections;
 
 namespace Crawler
 {
     public class Configuration
     {
         /// <summary>
-        /// Creates a crawlers' configuration
+        ///     Creates a crawlers' configuration
         /// </summary>
         /// <param name="rootLink">A starting position for traversal and loading of the site graph.</param>
-        /// <param name="destinationDirectory"> A root directory in the local filesystem for loaded content.
-        /// Sub directories can be created there to map different domains
-        /// Html responses will be saved as files with .html extension. </param>
+        /// <param name="destinationDirectory">
+        ///     A root directory in the local filesystem for loaded content.
+        ///     Sub directories can be created there to map different domains
+        ///     Html responses will be saved as files with .html extension.
+        /// </param>
         public Configuration(string rootLink, string destinationDirectory)
         {
             if (string.IsNullOrEmpty(rootLink))
@@ -31,7 +33,7 @@ namespace Crawler
 
         /// <summary>
         ///     A depth of traversal.
-        ///     Means hops from root url to last loaded leaf.
+        ///     Means hops from root uri to last loaded leaf.
         /// </summary>
         public short Depth { get; set; }
 

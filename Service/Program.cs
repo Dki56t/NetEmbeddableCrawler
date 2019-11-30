@@ -19,8 +19,8 @@ namespace Service
                     Mode = TraversalMode.AnyHost
                 }).ConfigureAwait(false);
 
-            foreach (var (url, exception) in result.FailedUrls)
-                Console.WriteLine($"{url}: {exception}");
+            foreach (var (uri, exception) in result.FailedUris)
+                Console.WriteLine($"{uri}: {exception}");
         }
     }
 }
