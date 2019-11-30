@@ -26,15 +26,16 @@ namespace Tests.UnitTests
         }
 
         [Fact]
-        public void ShouldDetermineIfItIsExternalLink()
+        public void ShouldDetermineIfItIsAbsoluteOfFileLink()
         {
-            UrlHelper.IsAbsoluteUrl("http://site.com").ShouldBeTrue();
-            UrlHelper.IsAbsoluteUrl("https://site.com").ShouldBeTrue();
-            UrlHelper.IsAbsoluteUrl("//site.com").ShouldBeTrue();
+            UrlHelper.IsAbsoluteFileOrHttpUri("http://site.com").ShouldBeTrue();
+            UrlHelper.IsAbsoluteFileOrHttpUri("https://site.com").ShouldBeTrue();
+            UrlHelper.IsAbsoluteFileOrHttpUri("//site.com").ShouldBeTrue();
             UrlHelper
-                .IsAbsoluteUrl("data:image/png;base64," +
+                .IsAbsoluteFileOrHttpUri("data:image/png;base64," +
                                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")
                 .ShouldBeFalse();
+            UrlHelper.IsAbsoluteFileOrHttpUri("javascript:void(0)").ShouldBeFalse();
         }
 
         [Fact]

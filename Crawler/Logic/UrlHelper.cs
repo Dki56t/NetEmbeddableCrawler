@@ -4,10 +4,13 @@ namespace Crawler.Logic
 {
     internal static class UrlHelper
     {
-        public static bool IsAbsoluteUrl(string url)
+        public static bool IsAbsoluteFileOrHttpUri(string url)
         {
             return Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
-                   !string.Equals(uri.Scheme, "data", StringComparison.OrdinalIgnoreCase);
+                   (uri.Scheme == Uri.UriSchemeFile ||
+                    uri.Scheme == Uri.UriSchemeFtp ||
+                    uri.Scheme == Uri.UriSchemeHttp ||
+                    uri.Scheme == Uri.UriSchemeHttps);
         }
 
         public static Uri? NormalizeUrl(string url)

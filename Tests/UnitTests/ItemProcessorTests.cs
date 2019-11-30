@@ -364,6 +364,24 @@ namespace Tests.UnitTests
         }
 
         [Fact]
+        public async Task ShouldNotProcessMailNodes()
+        {
+            var mocks = CreateMocksAndProcessor(new Configuration(MainUrl, Path)
+            {
+                Depth = 1,
+                Mode = TraversalMode.AnyHost
+            });
+
+            const string content = "<body><a href=\"mailto:uuu@domain.com\"> </a></body>";
+            mocks.LoaderMock.Setup(x => x.LoadStringAsync(MainUri))
+                .ReturnsAsync(content);
+
+            await mocks.Processor.RunAsync().ConfigureAwait(false);
+
+            mocks.WriterMock.Verify(l => l.WriteAsync(It.Is<Item>(i => i.Content == content)), Times.Once);
+        }
+
+        [Fact]
         public async Task ShouldRemoveCrossOriginData()
         {
             // ReSharper disable once StringLiteralTypo - an example of hash in an element.

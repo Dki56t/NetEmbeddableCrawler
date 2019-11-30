@@ -45,6 +45,10 @@ namespace Crawler.Logic
                 if (!CrawlingIsAllowed(item.Root, newRoot)) continue;
 
                 var type = HtmlHelper.ResolveType(link.OwnerNode.Name, link.Value);
+                var itemType = ConvertNodeTypeToItemType(type);
+                if (itemType == null)
+                    continue;
+
                 // If crawling should be done, replace uri with path in the file system.
                 UpdateLinkUriIfNeeded(uri, link, type, allowUriMappingCreation);
 
@@ -52,9 +56,7 @@ namespace Crawler.Logic
                 if (!context.TryRequestContentProcessing(uri))
                     continue;
 
-                var itemType = ConvertNodeTypeToItemType(type);
-                if (itemType != null)
-                    deeperItems.Add(new Item(uri, itemType.Value, newRoot));
+                deeperItems.Add(new Item(uri, itemType.Value, newRoot));
             }
 
             item.Content = doc.DocumentNode.OuterHtml;
@@ -106,7 +108,7 @@ namespace Crawler.Logic
 
         private static Uri? PrepareUri(string url, Uri root)
         {
-            var uri = UrlHelper.IsAbsoluteUrl(url)
+            var uri = UrlHelper.IsAbsoluteFileOrHttpUri(url)
                 ? url
                 : UrlHelper.BuildRelativeUri(root.OriginalString, url);
             return UrlHelper.NormalizeUrl(uri);
