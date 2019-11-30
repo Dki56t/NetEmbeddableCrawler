@@ -6,15 +6,13 @@ namespace Crawler.Logic
     {
         public static bool IsAbsoluteUrl(string url)
         {
-            return Uri.TryCreate(url, UriKind.Absolute, out _);
+            return Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+                   !string.Equals(uri.Scheme, "data", StringComparison.OrdinalIgnoreCase);
         }
 
         public static string? NormalizeUrl(string url)
         {
-            var partialIndex = url.IndexOf("/#", StringComparison.Ordinal);
-            if (partialIndex > -1)
-                url = url.Remove(partialIndex);
-            partialIndex = url.IndexOf("#", StringComparison.Ordinal);
+            var partialIndex = url.IndexOf("#", StringComparison.Ordinal);
             if (partialIndex > -1)
                 url = url.Remove(partialIndex);
             if (url.StartsWith("//"))

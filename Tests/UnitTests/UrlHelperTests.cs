@@ -31,6 +31,10 @@ namespace Tests.UnitTests
             UrlHelper.IsAbsoluteUrl("http://site.com").ShouldBeTrue();
             UrlHelper.IsAbsoluteUrl("https://site.com").ShouldBeTrue();
             UrlHelper.IsAbsoluteUrl("//site.com").ShouldBeTrue();
+            UrlHelper
+                .IsAbsoluteUrl("data:image/png;base64," +
+                               "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")
+                .ShouldBeFalse();
         }
 
         [Fact]
